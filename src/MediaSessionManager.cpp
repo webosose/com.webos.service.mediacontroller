@@ -16,6 +16,54 @@
 
 /*-----------------------------------------------------------------------------*/
 #include "MediaSessionManager.h"
+#include "MediaControlTypes.h"
 
-MediaSessionManager::MediaSessionManager()
-{}
+MediaSessionManager::MediaSessionManager() : activeMediaId_ (""),
+inactiveMediaId_(""), mapMediaSessionInfo_() {
+
+}
+
+MediaSessionManager& MediaSessionManager::getInstance()
+{
+  static MediaSessionManager objMediaSessionMgr;
+  return objMediaSessionMgr;
+}
+
+bool MediaSessionManager::activateMediaSession (const std::string &mediaId)
+{
+    activeMediaId_ = mediaId;
+    return true;
+}
+
+bool MediaSessionManager::deactivateMediaSession (const std::string &mediaId)
+{
+    inactiveMediaId_ = mediaId;
+    return true;
+}
+
+bool MediaSessionManager::addMediaSession (const std::string &mediaId, const std::string &appId, int displayId)
+{
+   //names will be changed later
+   mediaSession id(mediaId, appId);
+   mapMediaSessionInfo_[id.mediaId_]=id;
+
+   //logs will be added
+   for (auto itr : mapMediaSessionInfo_) {
+     std::cout << "value key"<< itr.first << std::endl;
+     std::cout << "value element:1"<< itr.second.appId_ << std::endl;
+  }
+  std::cout<<"size:"<<mapMediaSessionInfo_.size()<<std::endl;
+  return true;
+}
+
+bool MediaSessionManager::removeMediaSession (const std::string &mediaId)
+{
+   const auto cMediaId = mapMediaSessionInfo_.find(mediaId)->first;
+   for (auto itr : mapMediaSessionInfo_) {
+     if(itr.first == cMediaId) {
+       mapMediaSessionInfo_.erase(itr.first);
+       break;
+     }
+   }
+   return true;
+}

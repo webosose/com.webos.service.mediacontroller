@@ -21,7 +21,6 @@
  (File Inclusions)
  ------------------------------------------------------------------------------*/
 #include <string>
-
 #include "PmLogLib.h"
 
 #define CONST_MODULE_MCS "MediaControlService"
@@ -31,6 +30,17 @@
 #define PMLOG_ERROR(module, args...) PmLogMsg(getLunaPmLogContext(), Error, module, 0, ##args)
 #define PMLOG_INFO(module, args...) PmLogMsg(getLunaPmLogContext(), Info, module, 0, ##args)
 #define PMLOG_DEBUG(args...) PmLogMsg(getLunaPmLogContext(), Debug, NULL, 0, ##args)
+
+struct mediaSession
+{
+  std::string mediaId_;
+  std::string appId_;
+  mediaSession(): mediaId_(""), appId_("")
+  {}
+  mediaSession(const std::string& mediaId, const std::string& appId)
+    : mediaId_(mediaId), appId_(appId)
+  {}
+};
 
 class BTDeviceInfo
 {

@@ -41,6 +41,9 @@ MediaControlService::MediaControlService()
   PMLOG_INFO(CONST_MODULE_MCS,"%s IN", __FUNCTION__);
   LS_CATEGORY_BEGIN(MediaControlService, "/")
   LS_CATEGORY_METHOD(registerMediaSession)
+  LS_CATEGORY_METHOD(unregisterMediaSession)
+  LS_CATEGORY_METHOD(activateMediaSession)
+  LS_CATEGORY_METHOD(deactivateMediaSession)
   LS_CATEGORY_END;
 
   // attach to mainloop and run it
@@ -305,6 +308,101 @@ bool MediaControlService::onBTAvrcpKeyEventsCb(LSHandle *lshandle, LSMessage *me
 
 bool MediaControlService::registerMediaSession(LSMessage& message)
 {
+  g_debug("registerMediaSession API invoked");
+  bool subscribed = false;
+  std::string mediaId;
+  std::string appId;
+  int displayId;
+  CLSError lserror;
+
+  LSMessageJsonParser msg(&message,SCHEMA_4(REQUIRED(mediaId, string), \
+  REQUIRED(appId, string),REQUIRED(displayId, integer),REQUIRED(subscribe, boolean)));
+  
+  if (!msg.parse(__FUNCTION__))
+    return true;
+
+  msg.get("mediaId", mediaId);
+  msg.get("appId", appId);
+  msg.get("displayId", displayId);
+  msg.get("subscribe", subscribed);
+  
+  if (LSMessageIsSubscription(&message))
+  {
+    if (!LSSubscriptionAdd(this->get(), "registerMediaSession", &message, &lserror))
+    {
+      lserror.Print(__FUNCTION__, __LINE__);
+      g_debug("LSSubscriptionProcess failed");
+    }
+  }
+
+  MediaSessionManager::getInstance().addMediaSession(mediaId, appId, displayId);
+
+  pbnjson::JValue responseObj = pbnjson::Object();
+  responseObj.put("subscribed", subscribed);
+  responseObj.put("returnValue", true);
+  responseObj.put("mediaId", mediaId);
+  responseObj.put("displayId", displayId);
+  std::string responseOut = responseObj.stringify();
+  LS::Message request(&message);
+  request.respond(responseOut.c_str());
+  return true;
+}
+
+bool MediaControlService::unregisterMediaSession(LSMessage& message)
+{
+  std::string mediaId;
+
+  LSMessageJsonParser msg(&message,SCHEMA_1(REQUIRED(mediaId, string)));
+
+  if (!msg.parse(__FUNCTION__))
+    return true;
+
+  msg.get("mediaId", mediaId);
+
+  MediaSessionManager::getInstance().removeMediaSession(mediaId);
+  
+  pbnjson::JValue responseObj = pbnjson::Object();
+  responseObj.put("returnValue", true);
+  std::string responseOut = responseObj.stringify();
+  return true;
+}
+
+bool MediaControlService::activateMediaSession(LSMessage& message)
+{
+  std::string mediaId;
+
+  LSMessageJsonParser msg(&message,SCHEMA_1(REQUIRED(mediaId, string)));
+
+  if (!msg.parse(__FUNCTION__))
+    return true;
+
+  msg.get("mediaId", mediaId);
+
+  MediaSessionManager::getInstance().activateMediaSession(mediaId);
+
+  pbnjson::JValue responseObj = pbnjson::Object();
+  responseObj.put("returnValue", true);
+  std::string responseOut = responseObj.stringify();
+
+  return true;
+}
+
+bool MediaControlService::deactivateMediaSession(LSMessage& message)
+{
+  std::string mediaId;
+
+  LSMessageJsonParser msg(&message,SCHEMA_1(REQUIRED(mediaId, string)));
+
+  if (!msg.parse(__FUNCTION__))
+    return true;
+
+  msg.get("mediaId", mediaId);
+
+  MediaSessionManager::getInstance().deactivateMediaSession(mediaId);
+  
+  pbnjson::JValue responseObj = pbnjson::Object();
+  responseObj.put("returnValue", true);
+  std::string responseOut = responseObj.stringify();
   return true;
 }
 

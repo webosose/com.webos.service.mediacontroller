@@ -21,13 +21,24 @@
     (File Inclusions)
 ------------------------------------------------------------------------------*/
 #include <string>
+#include <map>
+#include <iostream>
+#include "MediaControlTypes.h"
 
 class MediaSessionManager
 {
 private:
+  std::string activeMediaId_;
+  std::string inactiveMediaId_;
+  std::map<std::string, mediaSession> mapMediaSessionInfo_;
 
 public:
   MediaSessionManager();
+  static MediaSessionManager &getInstance();
+  bool activateMediaSession (const std::string& mediaId);
+  bool deactivateMediaSession (const std::string& mediaId);
+  bool addMediaSession (const std::string& mediaId, const std::string& appId, int displayId);
+  bool removeMediaSession (const std::string& mediaId);
 };
 
 #endif /*MEDIA_SESSION_MANAGER_H_*/

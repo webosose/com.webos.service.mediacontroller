@@ -39,6 +39,9 @@ public:
   MediaControlService &operator=(MediaControlService &&) = delete;
 
   bool registerMediaSession(LSMessage &);
+  bool unregisterMediaSession(LSMessage &);
+  bool activateMediaSession(LSMessage &);
+  bool deactivateMediaSession(LSMessage &);
   static bool onBTAdapterQueryCb(LSHandle *lshandle, LSMessage *message, void *ctx);
   static bool onBTDeviceGetStatusCb(LSHandle *lshandle, LSMessage *message, void *ctx);
   static bool onBTAvrcpGetStatusCb(LSHandle *lshandle, LSMessage *message, void *ctx);
