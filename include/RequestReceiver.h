@@ -14,8 +14,8 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-#ifndef MEDIA_SESSION_MANAGER_H_
-#define MEDIA_SESSION_MANAGER_H_
+#ifndef REQUEST_RECEIVER_H_
+#define REQUEST_RECEIVER_H_
 
 /*-----------------------------------------------------------------------------
     (File Inclusions)
@@ -24,24 +24,21 @@
 #include <map>
 #include <iostream>
 #include "MediaControlTypes.h"
-#include "RequestReceiver.h"
+#include <list>
+#include <iostream>
+#include <string>
 
-class MediaSessionManager
+class RequestReceiver
 {
 private:
-  std::string activeMediaId_;
-  std::string inactiveMediaId_;
-  std::map<std::string, mediaSession> mapMediaSessionInfo_;
-  RequestReceiver objRequestRcvr;
-  MediaSessionManager();
+  std::list<requestReciever> clientListInfo_;
 
 public:
-  static MediaSessionManager &getInstance();
-  bool activateMediaSession (const std::string& mediaId);
-  bool deactivateMediaSession (const std::string& mediaId);
-  bool addMediaSession (const std::string& mediaId, const std::string& appId, int displayId);
-  bool removeMediaSession (const std::string& mediaId);
-  std::string getActiveSessionbyDisplayId (const int& displayId);
+  RequestReceiver();
+  void addClient(const std::string& mediaId);
+  bool removeClient(const std::string& mediaId);
+  std::string getLatestClient();
+  bool setPriorityClient(const std::string& mediaId, const bool priorityFlag);
 };
 
-#endif /*MEDIA_SESSION_MANAGER_H_*/
+#endif /*REQUEST_RECEIVER_H_*/

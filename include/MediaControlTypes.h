@@ -26,19 +26,31 @@
 #define CONST_MODULE_MCS "MediaControlService"
 #define CONST_MODULE_MCP "MediaControlPrivate"
 #define CONST_MODULE_MSM "MediaSessionManager"
+#define CONST_MODULE_RR  "RequestReceiver"
 
 #define PMLOG_ERROR(module, args...) PmLogMsg(getLunaPmLogContext(), Error, module, 0, ##args)
 #define PMLOG_INFO(module, args...) PmLogMsg(getLunaPmLogContext(), Info, module, 0, ##args)
 #define PMLOG_DEBUG(args...) PmLogMsg(getLunaPmLogContext(), Debug, NULL, 0, ##args)
 
+struct requestReciever {
+  std::string mediaId_;
+  bool setPriority_;
+  requestReciever(): mediaId_(""), setPriority_(false)
+  {}
+  requestReciever(const std::string& mediaId, bool setPriority)
+    : mediaId_(mediaId), setPriority_(setPriority)
+  {}
+};
+
 struct mediaSession
 {
   std::string mediaId_;
   std::string appId_;
-  mediaSession(): mediaId_(""), appId_("")
+  int displayId_;
+  mediaSession(): mediaId_(""), appId_(""), displayId_(0)
   {}
-  mediaSession(const std::string& mediaId, const std::string& appId)
-    : mediaId_(mediaId), appId_(appId)
+  mediaSession(const std::string& mediaId, const std::string& appId, const int displayId = 0)
+    : mediaId_(mediaId), appId_(appId), displayId_(displayId)
   {}
 };
 

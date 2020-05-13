@@ -31,20 +31,20 @@ MediaSessionManager& MediaSessionManager::getInstance()
 
 bool MediaSessionManager::activateMediaSession (const std::string &mediaId)
 {
-    activeMediaId_ = mediaId;
-    return true;
+  objRequestRcvr.setPriorityClient(mediaId, true);
+  return true;
 }
 
 bool MediaSessionManager::deactivateMediaSession (const std::string &mediaId)
 {
-    inactiveMediaId_ = mediaId;
+    objRequestRcvr.setPriorityClient(mediaId, false);
     return true;
 }
 
 bool MediaSessionManager::addMediaSession (const std::string &mediaId, const std::string &appId, int displayId)
 {
    //names will be changed later
-   mediaSession id(mediaId, appId);
+   mediaSession id(mediaId, appId, 0);
    mapMediaSessionInfo_[id.mediaId_]=id;
 
    //logs will be added
@@ -53,17 +53,31 @@ bool MediaSessionManager::addMediaSession (const std::string &mediaId, const std
      std::cout << "value element:1"<< itr.second.appId_ << std::endl;
   }
   std::cout<<"size:"<<mapMediaSessionInfo_.size()<<std::endl;
+
+  objRequestRcvr.addClient(id.mediaId_);
   return true;
 }
 
 bool MediaSessionManager::removeMediaSession (const std::string &mediaId)
 {
-   const auto cMediaId = mapMediaSessionInfo_.find(mediaId)->first;
+   const auto strMediaId = mapMediaSessionInfo_.find(mediaId)->first;
    for (auto itr : mapMediaSessionInfo_) {
-     if(itr.first == cMediaId) {
+     if(itr.first == strMediaId) {
        mapMediaSessionInfo_.erase(itr.first);
        break;
      }
    }
+   objRequestRcvr.removeClient(strMediaId);
    return true;
+}
+
+std::string MediaSessionManager::getActiveSessionbyDisplayId (const int &displayId)
+{
+  std::string strMediaId;
+  for (auto itr : mapMediaSessionInfo_) {
+    if(itr.second.displayId_ == displayId) {
+      strMediaId = itr.first;
+    }
+  }
+  return strMediaId;
 }
