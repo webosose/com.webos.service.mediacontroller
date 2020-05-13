@@ -41,6 +41,7 @@
 #define SCHEMA_7(p1, p2, p3, p4, p5, p6, p7) "{\"type\":\"object\",\"properties\":{" p1 "," p2 "," p3 "," p4 "," p5 "," p6 "," p7 "," SYSTEM_PARAMETERS "},\"additionalProperties\":false}"
 #define SCHEMA_8(p1, p2, p3, p4, p5, p6, p7, p8) "{\"type\":\"object\",\"properties\":{" p1 "," p2 "," p3 "," p4 "," p5 "," p6 "," p7 "," p8 "," SYSTEM_PARAMETERS "},\"additionalProperties\":false}"
 #define SCHEMA_9(p1, p2, p3, p4, p5, p6, p7, p8, p9) "{\"type\":\"object\",\"properties\":{" p1 "," p2 "," p3 "," p4 "," p5 "," p6 "," p7 "," p8 "," p9 "," SYSTEM_PARAMETERS "},\"additionalProperties\":false}"
+#define OBJECT(name, objschema)
 
 // Macros to use in place of the parameters in the SCHEMA_xxx macros above
 #define REQUIRED(name, type) "\"" #name "\":{\"type\":\"" #type "\"}"

@@ -36,7 +36,8 @@ std::string defaultAdapterAddress_;
 std::string secondAdapterAddress_;
 
 MediaControlService::MediaControlService()
-  : LS::Handle(LS::registerService(cstrMediaControlService.c_str()))
+  : LS::Handle(LS::registerService(cstrMediaControlService.c_str())),
+    lsHandle_(this->get())
 {
   PMLOG_INFO(CONST_MODULE_MCS,"%s IN", __FUNCTION__);
   LS_CATEGORY_BEGIN(MediaControlService, "/")
@@ -107,15 +108,17 @@ bool MediaControlService::onBTAdapterQueryCb(LSHandle *lshandle, LSMessage *mess
       std::string adapterAddress = adapters[i]["adapterAddress"].asString();
       PMLOG_INFO(CONST_MODULE_MCS,"%s : adapterName : %s, adapterAddress : %s",
                                    __FUNCTION__, adapterName.c_str(), adapterAddress.c_str());
-      if ("sa8155 Bluetooth hci0" == adapterName)
+      if ( ("sa8155 Bluetooth hci0" == adapterName) ||
+          ("raspberrypi4 #2" == adapterName) || ("raspberrypi4" == adapterName))
       {
         bool defaultValue = adapters[i]["default"].asBool();
         if (defaultAdapterAddress_ != adapterAddress)
         {
           defaultAdapterAddress_ = adapterAddress;
-          std::string payload = "{\"adapterAddress\":" + adapterAddress + "\"subscribe\":true}";
+          std::string payload = "{\"adapterAddress\":\"" + adapterAddress + "\",\"subscribe\":true}";
           PMLOG_INFO(CONST_MODULE_MCS,"%s : payload = %s for first adapter",__FUNCTION__, payload.c_str());
-          if (!LSCall(lshandle,
+          MediaControlService *obj = static_cast<MediaControlService *>(ctx);
+          if (!LSCall(obj->lsHandle_,
                       cstrBTDeviceGetStatus.c_str(),
                       payload.c_str(),
                       &MediaControlService::onBTDeviceGetStatusCb,
@@ -130,7 +133,7 @@ bool MediaControlService::onBTAdapterQueryCb(LSHandle *lshandle, LSMessage *mess
         if (secondAdapterAddress_ != adapterAddress)
         {
           secondAdapterAddress_ = adapterAddress;
-          std::string payload = "{\"adapterAddress\":" + adapterAddress + "\"subscribe\":true}";
+          std::string payload = "{\"adapterAddress\":\"" + adapterAddress + "\",\"subscribe\":true}";
           PMLOG_INFO(CONST_MODULE_MCS,"%s : payload = %s for second adapter",__FUNCTION__, payload.c_str());
           if (!LSCall(lshandle,
                       cstrBTDeviceGetStatus.c_str(),
@@ -190,10 +193,11 @@ bool MediaControlService::onBTDeviceGetStatusCb(LSHandle *lshandle, LSMessage *m
         {
           std::string address = devices[i]["address"].asString();
           std::string adapterAddress = devices[i]["adapterAddress"].asString();
-          std::string payload = "{\"adapterAddress\":" + adapterAddress + "\"address\":" + address + "\"subscribe\":true}";
+          std::string payload = "{\"adapterAddress\":\"" + adapterAddress + "\",\"address\":\"" + address + "\",\"subscribe\":true}";
           PMLOG_INFO(CONST_MODULE_MCS, "%s payload : %s", __FUNCTION__, payload.c_str());
           CLSError lserror;
-          if (!LSCall(lshandle,
+          MediaControlService *obj = static_cast<MediaControlService *>(ctx);
+          if (!LSCall(obj->lsHandle_,
                       cstrBTAvrcpGetStatus.c_str(),
                       payload.c_str(),
                       &MediaControlService::onBTAvrcpGetStatusCb,
@@ -239,17 +243,18 @@ bool MediaControlService::onBTAvrcpGetStatusCb(LSHandle *lshandle, LSMessage *me
                                   __FUNCTION__, address.c_str(), connected, adapterAddress.c_str());
     if (connected)
     {
-      int displayId = (defaultAdapterAddress_ == adapterAddress) ? 1 : 2;
+      int displayId = (defaultAdapterAddress_ == adapterAddress) ? 0 : 1;
 
       BTDeviceInfo objDevInfo(address, adapterAddress, displayId);
       //save the details of BT device connected
       MediaControlPrivate::getInstance().setBTDeviceInfo(objDevInfo);
 
-      std::string payload = "{\"address\":" + address + "\"subscribe\":true}";
+      std::string payload = "{\"address\":\"" + address + "\",\"subscribe\":true}";
       PMLOG_INFO(CONST_MODULE_MCS, "%s payload : %s", __FUNCTION__, payload.c_str());
       //subscribe to bt key events
+      MediaControlService *obj = static_cast<MediaControlService *>(ctx);
       CLSError lserror;
-      if (!LSCall(lshandle,
+      if (!LSCall(obj->lsHandle_,
                   cstrBTAvrcpReceivePassThroughCommand.c_str(),
                   payload.c_str(),
                   &MediaControlService::onBTAvrcpKeyEventsCb,
@@ -299,7 +304,8 @@ bool MediaControlService::onBTAvrcpKeyEventsCb(LSHandle *lshandle, LSMessage *me
       responseObj.put("mediaId", mediaId);
       std::string reply = responseObj.stringify() + createJsonReplyString("true");
       CLSError lserror;
-      if (!LSSubscriptionReply(lshandle,"/registerMediaSession" , reply.c_str(), &lserror))
+      MediaControlService *obj = static_cast<MediaControlService *>(ctx);
+      if (!LSSubscriptionReply(obj->lsHandle_,"/registerMediaSession" , reply.c_str(), &lserror))
         PMLOG_ERROR(CONST_MODULE_MCS,"%s LSSubscriptionReply failed", __FUNCTION__);
     }
   }
@@ -308,75 +314,83 @@ bool MediaControlService::onBTAvrcpKeyEventsCb(LSHandle *lshandle, LSMessage *me
 
 bool MediaControlService::registerMediaSession(LSMessage& message)
 {
-  g_debug("registerMediaSession API invoked");
-  bool subscribed = false;
-  std::string mediaId;
-  std::string appId;
-  int displayId;
+  PMLOG_INFO(CONST_MODULE_MCS, "%s IN", __FUNCTION__);
+
+  LSMessageJsonParser msg(&message,SCHEMA_2(OBJECT(mediasession_info, SCHEMA_2(REQUIRED(appId, string),REQUIRED(mediaId, string))),REQUIRED(subscribe, boolean)));
+
   CLSError lserror;
+  auto payload = msg.get();
+  auto params = payload["params"];
+  std::string mediaId = params["mediaId"].asString();
+  std::string appId = params["appId"].asString();
+  bool subscribed = params["appId"].isBoolean();
+  PMLOG_INFO(CONST_MODULE_MCS, "%s mediaId : %s appId : %s subscribed : %d",
+                                __FUNCTION__, mediaId.c_str(), appId.c_str(), subscribed);
 
-  LSMessageJsonParser msg(&message,SCHEMA_4(REQUIRED(mediaId, string), \
-  REQUIRED(appId, string),REQUIRED(displayId, integer),REQUIRED(subscribe, boolean)));
-  
-  if (!msg.parse(__FUNCTION__))
-    return true;
-
-  msg.get("mediaId", mediaId);
-  msg.get("appId", appId);
-  msg.get("displayId", displayId);
-  msg.get("subscribe", subscribed);
-  
   if (LSMessageIsSubscription(&message))
   {
     if (!LSSubscriptionAdd(this->get(), "registerMediaSession", &message, &lserror))
     {
-      lserror.Print(__FUNCTION__, __LINE__);
-      g_debug("LSSubscriptionProcess failed");
+      PMLOG_ERROR(CONST_MODULE_MCS, "%s LSSubscriptionAdd failed ",__FUNCTION__);
     }
   }
 
-  MediaSessionManager::getInstance().addMediaSession(mediaId, appId, displayId);
+  MediaSessionManager::getInstance().addMediaSession(mediaId, appId, 0);
 
   pbnjson::JValue responseObj = pbnjson::Object();
   responseObj.put("subscribed", subscribed);
   responseObj.put("returnValue", true);
-  responseObj.put("mediaId", mediaId);
-  responseObj.put("displayId", displayId);
   std::string responseOut = responseObj.stringify();
+
   LS::Message request(&message);
   request.respond(responseOut.c_str());
+
   return true;
 }
 
 bool MediaControlService::unregisterMediaSession(LSMessage& message)
 {
-  std::string mediaId;
+  PMLOG_INFO(CONST_MODULE_MCS, "%s IN", __FUNCTION__);
 
   LSMessageJsonParser msg(&message,SCHEMA_1(REQUIRED(mediaId, string)));
 
   if (!msg.parse(__FUNCTION__))
+  {
+    PMLOG_ERROR(CONST_MODULE_MCS, "%s Parsing failed", __FUNCTION__);
     return true;
+  }
 
+  std::string mediaId;
   msg.get("mediaId", mediaId);
+  PMLOG_INFO(CONST_MODULE_MCS, "%s mediaId : %s", __FUNCTION__, mediaId.c_str());
 
   MediaSessionManager::getInstance().removeMediaSession(mediaId);
-  
+
   pbnjson::JValue responseObj = pbnjson::Object();
   responseObj.put("returnValue", true);
   std::string responseOut = responseObj.stringify();
+
+  LS::Message request(&message);
+  request.respond(responseOut.c_str());
+
   return true;
 }
 
 bool MediaControlService::activateMediaSession(LSMessage& message)
 {
-  std::string mediaId;
+  PMLOG_INFO(CONST_MODULE_MCS, "%s IN", __FUNCTION__);
 
   LSMessageJsonParser msg(&message,SCHEMA_1(REQUIRED(mediaId, string)));
 
   if (!msg.parse(__FUNCTION__))
+  {
+    PMLOG_ERROR(CONST_MODULE_MCS, "%s Parsing failed", __FUNCTION__);
     return true;
+  }
 
+  std::string mediaId;
   msg.get("mediaId", mediaId);
+  PMLOG_INFO(CONST_MODULE_MCS, "%s mediaId : %s", __FUNCTION__, mediaId.c_str());
 
   MediaSessionManager::getInstance().activateMediaSession(mediaId);
 
@@ -384,25 +398,35 @@ bool MediaControlService::activateMediaSession(LSMessage& message)
   responseObj.put("returnValue", true);
   std::string responseOut = responseObj.stringify();
 
+  LS::Message request(&message);
+  request.respond(responseOut.c_str());
+
   return true;
 }
 
 bool MediaControlService::deactivateMediaSession(LSMessage& message)
 {
-  std::string mediaId;
+  PMLOG_INFO(CONST_MODULE_MCS, "%s IN", __FUNCTION__);
 
   LSMessageJsonParser msg(&message,SCHEMA_1(REQUIRED(mediaId, string)));
 
   if (!msg.parse(__FUNCTION__))
+  {
+    PMLOG_ERROR(CONST_MODULE_MCS, "%s Parsing failed", __FUNCTION__);
     return true;
+  }
 
+  std::string mediaId;
   msg.get("mediaId", mediaId);
+  PMLOG_INFO(CONST_MODULE_MCS, "%s mediaId : %s", __FUNCTION__, mediaId.c_str());
 
   MediaSessionManager::getInstance().deactivateMediaSession(mediaId);
-  
+
   pbnjson::JValue responseObj = pbnjson::Object();
   responseObj.put("returnValue", true);
   std::string responseOut = responseObj.stringify();
+  LS::Message request(&message);
+  request.respond(responseOut.c_str());
   return true;
 }
 

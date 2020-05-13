@@ -49,6 +49,8 @@ public:
 
 private:
   void subscribeToBTAdapterGetStatus();
+
+  LSHandle *lsHandle_;
 };
 
 #endif /*MEDIA_CONTROL_SERVICE_H_*/
