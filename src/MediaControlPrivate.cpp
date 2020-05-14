@@ -16,17 +16,33 @@
 
 /*-----------------------------------------------------------------------------*/
 #include "MediaControlPrivate.h"
+#include "MediaSessionManager.h"
 
-MediaControlPrivate::MediaControlPrivate()
-{}
+MediaControlPrivate::MediaControlPrivate() :
+  mapDeviceInfo_() {
+}
 
-MediaControlPrivate& MediaControlPrivate::getInstance()
-{
+MediaControlPrivate& MediaControlPrivate::getInstance() {
   static MediaControlPrivate objMediaCtrlPrivate;
   return objMediaCtrlPrivate;
 }
 
-void MediaControlPrivate::setBTDeviceInfo(const BTDeviceInfo& objDevInfo)
-{
+void MediaControlPrivate::setBTDeviceInfo(const BTDeviceInfo& objDevInfo) {
+  PMLOG_INFO(CONST_MODULE_MCP, "%s Connected device", __FUNCTION__);
+  //add Device to the map
+  std::string deviceAddress = objDevInfo.deviceAddress_;
+  PMLOG_INFO(CONST_MODULE_MCP, "%s Connected device device Address : %s", __FUNCTION__, deviceAddress.c_str());
+  mapDeviceInfo_[deviceAddress] = objDevInfo;
+}
 
+std::string MediaControlPrivate::getMediaId(const std::string& deviceAddress) {
+  PMLOG_INFO(CONST_MODULE_MCP, "%s for device Address : %s", __FUNCTION__, deviceAddress.c_str());
+  std::string mediaId;
+  for(const auto& itr : mapDeviceInfo_) {
+    if(itr.first == deviceAddress) {
+      mediaId = MediaSessionManager::getInstance().getActiveSessionbyDisplayId(itr.second.displayId_);
+      return mediaId;
+    }
+  }
+  return mediaId;
 }

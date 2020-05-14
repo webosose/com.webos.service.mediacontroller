@@ -20,6 +20,8 @@
 /*-----------------------------------------------------------------------------
  (File Inclusions)
  ------------------------------------------------------------------------------*/
+#include <map>
+
 #include "MediaControlTypes.h"
 
 class MediaControlPrivate
@@ -28,9 +30,11 @@ public:
   static MediaControlPrivate &getInstance();
 
   void setBTDeviceInfo(const BTDeviceInfo& objDevInfo);
+  std::string getMediaId(const std::string& deviceAddress);
 
 private:
   MediaControlPrivate();
+  std::map<std::string, BTDeviceInfo> mapDeviceInfo_;
 };
 
 #endif /*MEDIA_CONTROL_SERVICE_H_*/

@@ -17,29 +17,27 @@
 /*-----------------------------------------------------------------------------*/
 #include "RequestReceiver.h"
 
-RequestReceiver::RequestReceiver() : clientListInfo_() {
-
+RequestReceiver::RequestReceiver() : clientListInfo_()
+{
 }
 
-void RequestReceiver::addClient (const std::string &mediaId) 
-{
+void RequestReceiver::addClient (const std::string& mediaId) {
   PMLOG_INFO(CONST_MODULE_RR, "%s mediaId : %s", __FUNCTION__, mediaId.c_str());
-  requestReciever clients(mediaId, false);
+  requestReceiver clients(mediaId, false);
   clientListInfo_.push_front(clients);
 }
 
-bool RequestReceiver::removeClient (const std::string &mediaId)
-{
+bool RequestReceiver::removeClient (const std::string& mediaId) {
   PMLOG_INFO(CONST_MODULE_RR, "%s mediaId : %s", __FUNCTION__, mediaId.c_str());
 
   if (clientListInfo_.empty()) {
-    PMLOG_INFO(CONST_MODULE_RR, "%s clientListInfo_ is empty", __FUNCTION__);
+    PMLOG_ERROR(CONST_MODULE_RR, "%s clientListInfo_ is empty", __FUNCTION__);
     return false;
   }
 
   for (auto itr = clientListInfo_.begin(); itr != clientListInfo_.end(); ) {
     if(itr->mediaId_ == mediaId) {
-      itr=clientListInfo_.erase(itr);
+      itr = clientListInfo_.erase(itr);
       return true;
     } else {
         ++itr;
@@ -48,66 +46,57 @@ bool RequestReceiver::removeClient (const std::string &mediaId)
   return false;
 }
 
-std::string RequestReceiver::getLatestClient ()
-{
+std::string RequestReceiver::getLastActiveClient () {
   PMLOG_INFO(CONST_MODULE_RR, "%s ", __FUNCTION__);
-  requestReciever latestClient;
-  std::string activeMediaId;
 
+  std::string activeMediaId;
   if (clientListInfo_.empty()) {
-    PMLOG_INFO(CONST_MODULE_RR, "%s clientListInfo_ is empty", __FUNCTION__);
-    return "";
+    PMLOG_ERROR(CONST_MODULE_RR, "%s clientListInfo_ is empty", __FUNCTION__);
+    return activeMediaId;
   }
 
-  latestClient = clientListInfo_.front();
-  if(latestClient.setPriority_ == true)
-    activeMediaId = latestClient.mediaId_;
+  //todo : get active client based on displayid
+  requestReceiver latestClient = clientListInfo_.front();
+   if(latestClient.priority_)
+     activeMediaId = latestClient.mediaId_;
+
   return activeMediaId;
 }
 
-bool RequestReceiver::setPriorityClient (const std::string& mediaId, bool priorityFlag)
-{ 
-  PMLOG_INFO(CONST_MODULE_RR, "%s mediaId : %s %d ", __FUNCTION__, mediaId.c_str(), priorityFlag);
-  std::string currMediaId;
-  bool currPriorityVal;
-  requestReciever frontClient;
+bool RequestReceiver::setClientPriority (const std::string& mediaId, const int& priority)
+{
+  PMLOG_INFO(CONST_MODULE_RR, "%s mediaId : %s %d ", __FUNCTION__, mediaId.c_str(), priority);
 
   if (clientListInfo_.empty()) {
-    PMLOG_INFO(CONST_MODULE_RR, "%s clientListInfo_ is empty", __FUNCTION__);
+    PMLOG_ERROR(CONST_MODULE_RR, "%s clientListInfo_ is empty", __FUNCTION__);
     return false;
   }
 
-  //set PriorityFlag for recieved mediaId
-  for(auto& itr : clientListInfo_) {
-    if(itr.mediaId_ == mediaId)
-      itr.setPriority_ = priorityFlag;
-  }
-
-  //check whether recieved element  is in the front of list and if not set it to front only when priority
-  //flag set true
-  if(priorityFlag) {
-  frontClient = clientListInfo_.front();
+  //check if element is at front
+  requestReceiver frontClient = clientListInfo_.front();
   if(frontClient.mediaId_ == mediaId) {
     PMLOG_INFO(CONST_MODULE_RR, "%s : client is already at front", __FUNCTION__);
+    frontClient.priority_ = priority;
     return true;
-  } else {
-      std::list<requestReciever>::iterator current = clientListInfo_.begin();
-        for (; current != clientListInfo_.end(); current++) {
-          if (current->mediaId_ == mediaId) {
-            currMediaId = current->mediaId_;
-            currPriorityVal = current->setPriority_;
-            break;
-          }
+  } else { //else swap the element with front
+    std::list<requestReceiver>::iterator front = clientListInfo_.begin();
+    std::list<requestReceiver>::iterator itr = clientListInfo_.begin();
+    for (; itr != clientListInfo_.end(); itr++) {
+      if (itr->mediaId_ == mediaId) {
+        itr->priority_ = priority;
+        if(priority) {
+          std::string currMediaId = itr->mediaId_;
+          int currPriority = itr->priority_;
+          itr->mediaId_ = front->mediaId_;
+          itr->priority_ = front->priority_;
+          front->mediaId_ = currMediaId;
+          front->priority_ = currPriority;
+          PMLOG_INFO(CONST_MODULE_RR, "%s : client set at front", __FUNCTION__);
         }
-      current->mediaId_=frontClient.mediaId_;
-      current->setPriority_=frontClient.setPriority_;
-
-      std::list<requestReciever>::iterator update = clientListInfo_.begin();
-      update->mediaId_=currMediaId;
-      update->setPriority_=currPriorityVal;
-      PMLOG_INFO(CONST_MODULE_RR, "%s : client set at front", __FUNCTION__);
-      return true;
-    } 
+        break;
+      }
+    }
+    return true;
   }
   return false;
 }

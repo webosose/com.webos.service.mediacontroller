@@ -20,27 +20,24 @@
 /*-----------------------------------------------------------------------------
     (File Inclusions)
 ------------------------------------------------------------------------------*/
-#include <string>
 #include <map>
-#include <iostream>
 #include "MediaControlTypes.h"
 #include "RequestReceiver.h"
 
 class MediaSessionManager
 {
 private:
-  std::string activeMediaId_;
-  std::string inactiveMediaId_;
-  std::map<std::string, mediaSession> mapMediaSessionInfo_;
-  RequestReceiver objRequestRcvr;
   MediaSessionManager();
+  std::map<std::string, mediaSession> mapMediaSessionInfo_;
+  RequestReceiver objRequestRcvr_;
 
 public:
   static MediaSessionManager &getInstance();
+  void addMediaSession (const std::string& mediaId, const std::string& appId);
   bool activateMediaSession (const std::string& mediaId);
   bool deactivateMediaSession (const std::string& mediaId);
-  bool addMediaSession (const std::string& mediaId, const std::string& appId, int displayId);
   bool removeMediaSession (const std::string& mediaId);
+  //todo : add session related API's in nxc ccc
   std::string getActiveSessionbyDisplayId (const int& displayId);
 };
 

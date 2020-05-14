@@ -16,31 +16,18 @@
 
 /*-----------------------------------------------------------------------------*/
 #include "Lsutils.h"
-
-void CLSError::Print(const char * where, int line, GLogLevelFlags logLevel)
-{
-  if (LSErrorIsSet(this))
-  {
-    g_log(G_LOG_DOMAIN, logLevel, "%s(%d): Luna Service Error #%d \"%s\",  \
-                                  \nin %s line #%d.", where, line,
-                                  this->error_code, this->message,
-                                  this->file, this->line);
-    LSErrorFree(this);
-  }
-}
+#include "MediaControlTypes.h"
 
 LSMessageJsonParser::LSMessageJsonParser(LSMessage * message,
                                          const char * schema) :
                                          mMessage_(message),
                                          mSchemaText_(schema),
-                                         mSchema_(schema)
-{
+                                         mSchema_(schema) {
 }
 
 bool LSMessageJsonParser::parse(const char * callerFunction,
                                 LSHandle * lssender,
-                                ELogOption logOption)
-{
+                                ELogOption logOption) {
   const char * payload = getPayload();
   const char * context = 0;
   if (logOption == eLogOption_LogMessageWithCategory)
@@ -51,9 +38,8 @@ bool LSMessageJsonParser::parse(const char * callerFunction,
     context = "";
 
   if (logOption != eLogOption_DontLogMessage)
-    g_debug("%s%s: got '%s'", callerFunction, context, payload);
-  if (!mParser_.parse(payload, mSchema_))
-  {
+    PMLOG_ERROR(CONST_MODULE_MCS, "%s %s: got '%s'", callerFunction, context, payload);
+  if (!mParser_.parse(payload, mSchema_)) {
     const char *    sender = LSMessageGetSenderServiceName(mMessage_);
     if (sender == 0 || *sender == 0)
       sender = LSMessageGetSender(mMessage_);
@@ -61,31 +47,26 @@ bool LSMessageJsonParser::parse(const char * callerFunction,
       sender = "";
     std::string errorText = "Could not validate json message against schema";
     bool notJson = true;
-    if (strcmp(mSchemaText_, SCHEMA_ANY) != 0)
-    {
+    if (strcmp(mSchemaText_, SCHEMA_ANY) != 0) {
       pbnjson::JSchemaFragment    genericSchema(SCHEMA_ANY);
       notJson = !mParser_.parse(payload, genericSchema);
     }
-    if (notJson)
-    {
-      g_critical("%s%s: The message '%s' sent by '%s' is not a valid  \
-                json message.", callerFunction, context,
-                payload, sender);
+    if (notJson) {
+      PMLOG_ERROR(CONST_MODULE_MCS, "%s %s: The message '%s' sent by '%s' is not a valid  \
+                json message.", callerFunction, context, payload, sender);
       errorText = "Not a valid json message";
     }
-    else
-    {
-      g_critical("%s%s: Could not validate json message '%s' sent by   \
+    else {
+      PMLOG_ERROR(CONST_MODULE_MCS, "%s %s: Could not validate json message '%s' sent by   \
                  '%s' against schema '%s'.",
                  callerFunction, context,
                  payload, sender, mSchemaText_);
      }
-     if (sender)
-     {
+     if (sender) {
        std::string reply = createJsonReplyString(false, 1, errorText);
        CLSError lserror;
        if (!LSMessageReply(lssender, mMessage_, reply.c_str(), &lserror))
-          lserror.Print(callerFunction, 0);
+          PMLOG_ERROR(CONST_MODULE_MCS, "%s LSMessageReply failed",callerFunction);
      }
      return false;
    }
@@ -94,28 +75,23 @@ bool LSMessageJsonParser::parse(const char * callerFunction,
 
 std::string createJsonReplyString(bool returnValue,
                                   int errorCode,
-                                  const std::string& errorText)
-{
-  std::string reply;
+                                  const std::string& errorText) {
   pbnjson::JValue responseObj = pbnjson::Object();
-  if (returnValue)
-    reply = STANDARD_JSON_SUCCESS;
-  else if (errorCode)
-  {
-    if (!errorText.empty())
-    {
+  if (returnValue) {
+    responseObj.put("returnValue", returnValue);
+  }
+  else if (errorCode) {
+    if (!errorText.empty()) {
       responseObj.put("returnValue", false);
       responseObj.put("errorCode", errorCode);
       responseObj.put("errorText", errorText);
     }
-    else
-    {
+    else {
       responseObj.put("returnValue", false);
       responseObj.put("errorCode", errorCode);
     }
   }
-  else if (!errorText.empty())
-  {
+  else if (!errorText.empty()) {
     responseObj.put("returnValue", false);
     responseObj.put("errorText", errorText);
   }
@@ -123,17 +99,4 @@ std::string createJsonReplyString(bool returnValue,
     responseObj.put("returnValue", false);
 
   return responseObj.stringify();
- }
-
- std::string jsonToString(pbnjson::JValue & reply, const char * schema)
- {
-   pbnjson::JGenerator serializer(NULL);// our schema that we will be using
-                                        // does not have any external references
-   std::string serialized;
-   pbnjson::JSchemaFragment responseSchema(schema);
-   if (!serializer.toString(reply, responseSchema, serialized)) {
-     g_critical("serializeJsonReply: failed to generate json reply");
-     return "{\"returnValue\":false,\"errorText\":\"audiod error: Failed to generate a valid json reply...\"}";
-   }
-   return serialized;
- }
+}

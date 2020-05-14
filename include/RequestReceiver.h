@@ -20,25 +20,22 @@
 /*-----------------------------------------------------------------------------
     (File Inclusions)
 ------------------------------------------------------------------------------*/
-#include <string>
 #include <map>
-#include <iostream>
-#include "MediaControlTypes.h"
 #include <list>
-#include <iostream>
-#include <string>
+
+#include "MediaControlTypes.h"
 
 class RequestReceiver
 {
 private:
-  std::list<requestReciever> clientListInfo_;
+  std::list<requestReceiver> clientListInfo_;
 
 public:
   RequestReceiver();
   void addClient(const std::string& mediaId);
+  std::string getLastActiveClient();
+  bool setClientPriority(const std::string& mediaId, const int& priority);
   bool removeClient(const std::string& mediaId);
-  std::string getLatestClient();
-  bool setPriorityClient(const std::string& mediaId, const bool priorityFlag);
 };
 
 #endif /*REQUEST_RECEIVER_H_*/
