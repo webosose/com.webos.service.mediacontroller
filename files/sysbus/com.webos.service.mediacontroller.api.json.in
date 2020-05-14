@@ -1,0 +1,9 @@
+{
+        "mediacontroller": [
+                         "com.webos.service.mediacontroller/registerMediaSession",
+                         "com.webos.service.mediacontroller/unregisterMediaSession",
+                         "com.webos.service.mediacontroller/activateMediaSession",
+                         "com.webos.service.mediacontroller/deactivateMediaSession"
+        ]
+}
+

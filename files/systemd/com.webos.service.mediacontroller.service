@@ -1,0 +1,11 @@
+[Unit]
+Description=webos - "%n"
+Requires=ls-hubd.service webos-bluetooth-service
+After=ls-hubd.service webos-bluetooth-service
+
+[Service]
+Type=simple
+OOMScoreAdjust=-500
+Environment=CHARSET=UTF-8
+ExecStart=/usr/sbin/com.webos.service.mediacontroller
+Restart=on-failure
