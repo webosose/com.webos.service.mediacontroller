@@ -57,6 +57,7 @@ set(SRC_LIST
     ${CMAKE_SOURCE_DIR}/src/MediaControlService.cpp
     ${CMAKE_SOURCE_DIR}/src/MediaSessionManager.cpp
     ${CMAKE_SOURCE_DIR}/src/MediaControlPrivate.cpp
+    ${CMAKE_SOURCE_DIR}/src/RequestReceiver.cpp
     ${CMAKE_SOURCE_DIR}/src/Lsutils.cpp
    )
 

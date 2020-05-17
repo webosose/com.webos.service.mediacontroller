@@ -20,9 +20,11 @@
 /*-----------------------------------------------------------------------------
  (File Inclusions)
  ------------------------------------------------------------------------------*/
-#include <pbnjson.hpp>
 #include <luna-service2/lunaservice.hpp>
 #include <glib.h>
+
+#include "MediaSessionManager.h"
+#include "MediaControlPrivate.h"
 
 class MediaControlService : public LS::Handle
 {
@@ -42,6 +44,11 @@ public:
   bool unregisterMediaSession(LSMessage &);
   bool activateMediaSession(LSMessage &);
   bool deactivateMediaSession(LSMessage &);
+  bool getMediaMetaData(LSMessage &);
+  bool getMediaPlayStatus(LSMessage &);
+  bool getMediaSessionInfo(LSMessage &);
+  bool getMediaSessionId(LSMessage &);
+  bool getActiveMediaSessions(LSMessage &);
   static bool onBTAdapterQueryCb(LSHandle *lshandle, LSMessage *message, void *ctx);
   static bool onBTDeviceGetStatusCb(LSHandle *lshandle, LSMessage *message, void *ctx);
   static bool onBTAvrcpGetStatusCb(LSHandle *lshandle, LSMessage *message, void *ctx);
@@ -51,6 +58,8 @@ private:
   void subscribeToBTAdapterGetStatus();
 
   LSHandle *lsHandle_;
+  MediaSessionManager *ptrMediaSessionMgr_;
+  MediaControlPrivate *ptrMediaControlPrivate_;
 };
 
 #endif /*MEDIA_CONTROL_SERVICE_H_*/

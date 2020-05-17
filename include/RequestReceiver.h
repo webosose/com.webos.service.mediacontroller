@@ -14,31 +14,28 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-#ifndef MEDIA_SESSION_MANAGER_H_
-#define MEDIA_SESSION_MANAGER_H_
+#ifndef REQUEST_RECEIVER_H_
+#define REQUEST_RECEIVER_H_
 
 /*-----------------------------------------------------------------------------
     (File Inclusions)
 ------------------------------------------------------------------------------*/
 #include <map>
-#include "MediaControlTypes.h"
-#include "RequestReceiver.h"
+#include <list>
 
-class MediaSessionManager
+#include "MediaControlTypes.h"
+
+class RequestReceiver
 {
 private:
-  MediaSessionManager();
-  std::map<std::string, mediaSession> mapMediaSessionInfo_;
-  RequestReceiver objRequestRcvr_;
+  std::list<requestReceiver> clientListInfo_;
 
 public:
-  static MediaSessionManager &getInstance();
-  void addMediaSession (const std::string& mediaId, const std::string& appId);
-  bool activateMediaSession (const std::string& mediaId);
-  bool deactivateMediaSession (const std::string& mediaId);
-  bool removeMediaSession (const std::string& mediaId);
-  //todo : add session related API's in nxc ccc
-  std::string getActiveSessionbyDisplayId (const int& displayId);
+  RequestReceiver();
+  void addClient(const std::string& mediaId);
+  std::string getLastActiveClient();
+  bool setClientPriority(const std::string& mediaId, const int& priority);
+  bool removeClient(const std::string& mediaId);
 };
 
-#endif /*MEDIA_SESSION_MANAGER_H_*/
+#endif /*REQUEST_RECEIVER_H_*/
