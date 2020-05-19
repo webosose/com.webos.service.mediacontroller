@@ -60,6 +60,7 @@ std::string RequestReceiver::getLastActiveClient () {
    if(latestClient.priority_)
      activeMediaId = latestClient.mediaId_;
 
+  PMLOG_INFO(CONST_MODULE_RR, "%s activeMediaId : %s ",  __FUNCTION__, activeMediaId.c_str());
   return activeMediaId;
 }
 
@@ -76,7 +77,8 @@ bool RequestReceiver::setClientPriority (const std::string& mediaId, const int& 
   requestReceiver frontClient = clientListInfo_.front();
   if(frontClient.mediaId_ == mediaId) {
     PMLOG_INFO(CONST_MODULE_RR, "%s : client is already at front", __FUNCTION__);
-    frontClient.priority_ = priority;
+    std::list<requestReceiver>::iterator itr = clientListInfo_.begin();
+    itr->priority_ = priority;
     return true;
   } else { //else swap the element with front
     std::list<requestReceiver>::iterator front = clientListInfo_.begin();

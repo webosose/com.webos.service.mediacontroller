@@ -326,7 +326,7 @@ bool MediaControlService::registerMediaSession(LSMessage& message) {
   }
 
   pbnjson::JValue payload = msg.get();
-	pbnjson::JValue params = payload["params"];
+  pbnjson::JValue params = payload["params"];
   std::string mediaId = params["mediaId"].asString();
   std::string appId = params["appId"].asString();
   subscribed = payload["subscribe"].asBool();
@@ -394,7 +394,7 @@ bool MediaControlService::unregisterMediaSession(LSMessage& message) {
     response = createJsonReplyString(returnValue);
   else
     response = createJsonReplyString(returnValue, MCS_ERROR_INVALID_MEDIAID, CSTR_INVALID_MEDIAID);
- 
+
   request.respond(response.c_str());
 
   return true;
@@ -468,9 +468,9 @@ bool MediaControlService::deactivateMediaSession(LSMessage& message) {
     response = createJsonReplyString(returnValue);
   else
     response = createJsonReplyString(returnValue, MCS_ERROR_INVALID_MEDIAID, CSTR_INVALID_MEDIAID);
- 
+
   request.respond(response.c_str());
- 
+
   return true;
 }
 
