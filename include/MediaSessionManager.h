@@ -33,10 +33,14 @@ private:
 
 public:
   static MediaSessionManager &getInstance();
-  void addMediaSession (const std::string& mediaId, const std::string& appId);
+  void addMediaSession (const std::string& mediaId,
+                        const std::string& appId,
+                        const mediaMetaData& obj);
   bool activateMediaSession (const std::string& mediaId);
   bool deactivateMediaSession (const std::string& mediaId);
   bool removeMediaSession (const std::string& mediaId);
+  mediaMetaData getMediaMetaData(const std::string& mediaId);
+  std::string getMediaPlayStatus(const std::string& mediaId);
   //todo : add session related API's in nxc ccc
   std::string getActiveSessionbyDisplayId (const int& displayId);
 };

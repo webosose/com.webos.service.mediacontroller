@@ -38,10 +38,14 @@ bool MediaSessionManager::activateMediaSession (const std::string& mediaId) {
   return false;
 }
 
-void MediaSessionManager::addMediaSession (const std::string& mediaId, const std::string& appId) {
+void MediaSessionManager::addMediaSession (const std::string& mediaId,
+                                           const std::string& appId,
+                                           const mediaMetaData& objMetaData) {
   PMLOG_INFO(CONST_MODULE_MSM, "%s mediaId : %s , appId : %s", __FUNCTION__, mediaId.c_str(), appId.c_str());
   //create mediaSession object : todo : get displayId from ums
   mediaSession objMediaSession(mediaId, appId, false);
+  //save metadata info
+  objMediaSession.setMetaData(objMetaData);
   mapMediaSessionInfo_[mediaId] = objMediaSession;
   //add mediaId to receiver stack
   objRequestRcvr_.addClient(mediaId);
@@ -70,6 +74,32 @@ bool MediaSessionManager::removeMediaSession (const std::string& mediaId) {
     }
   }
   return false;
+}
+
+mediaMetaData MediaSessionManager::getMediaMetaData(const std::string& mediaId) {
+  PMLOG_INFO(CONST_MODULE_MSM, "%s mediaId : %s", __FUNCTION__, mediaId);
+
+  mediaMetaData objMetaData;
+  for(const auto& itr : mapMediaSessionInfo_) {
+    if(itr.first == mediaId) {
+      objMetaData = itr.second.getMediaMetaDataObj();
+      break;
+    }
+  }
+  return objMetaData;
+}
+
+std::string MediaSessionManager::getMediaPlayStatus(const std::string& mediaId) {
+  PMLOG_INFO(CONST_MODULE_MSM, "%s mediaId : %s", __FUNCTION__, mediaId);
+
+  std::string playStatus;
+  for(const auto& itr : mapMediaSessionInfo_) {
+    if(itr.first == mediaId) {
+      playStatus = itr.second.getPlayStatus();
+      break;
+    }
+  }
+  return playStatus;
 }
 
 std::string MediaSessionManager::getActiveSessionbyDisplayId (const int& displayId) {
