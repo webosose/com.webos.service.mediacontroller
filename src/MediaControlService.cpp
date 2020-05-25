@@ -51,6 +51,7 @@ MediaControlService::MediaControlService()
   LS_CATEGORY_METHOD(getActiveMediaSessions)
   LS_CATEGORY_METHOD(setMediaMetaData)
   LS_CATEGORY_METHOD(setMediaPlayStatus)
+  LS_CATEGORY_METHOD(testKeyEvent)
   LS_CATEGORY_END;
 
   // attach to mainloop and run it
@@ -816,6 +817,50 @@ bool MediaControlService::setMediaPlayStatus(LSMessage& message) {
   PMLOG_INFO(CONST_MODULE_MCS, "%s response : %s", __FUNCTION__, response.c_str());
   request.respond(response.c_str());
 
+  return true;
+}
+
+bool MediaControlService::testKeyEvent(LSMessage &message) {
+  PMLOG_INFO(CONST_MODULE_MCS, "%s IN", __FUNCTION__);
+
+  LSMessageJsonParser msg(&message,
+      SCHEMA_2(REQUIRED(mediaId, string),REQUIRED(keyEvent, string)));
+
+  LS::Message request(&message);
+  int errorCode = MCS_ERROR_NO_ERROR;
+  std::string errorText;
+  std::string response;
+  if (!msg.parse(__FUNCTION__)) {
+    PMLOG_ERROR(CONST_MODULE_MCS, "%s Parsing failed", __FUNCTION__);
+    errorCode = MCS_ERROR_PARSING_FAILED;
+    errorText = CSTR_PARSING_ERROR;
+    response = createJsonReplyString(false, errorCode, errorText);
+    request.respond(response.c_str());
+    return true;
+  }
+
+  std::string keyCode;
+  std::string mediaId;
+  msg.get("keyEvent", keyCode);
+  PMLOG_INFO(CONST_MODULE_MCS, "%s keyEvent : %s", __FUNCTION__, keyCode.c_str());
+  msg.get("mediaId", mediaId);
+  PMLOG_INFO(CONST_MODULE_MCS, "%s mediaId : %s", __FUNCTION__, mediaId.c_str());
+
+  pbnjson::JValue responseObj = pbnjson::Object();
+
+  responseObj.put("keyEvent", keyCode);
+  responseObj.put("mediaId", mediaId);
+  responseObj.put("returnValue", true);
+  responseObj.put("subscribed", true);
+  PMLOG_INFO(CONST_MODULE_MCS, "%s send subscription response :%s", __FUNCTION__, responseObj.stringify().c_str());
+  CLSError lserror;
+  if (!LSSubscriptionReply(lsHandle_, "registerMediaSession",
+      responseObj.stringify().c_str(), &lserror))
+    PMLOG_ERROR(CONST_MODULE_MCS,"%s LSSubscriptionReply failed", __FUNCTION__);
+
+  pbnjson::JValue responseObj1 = pbnjson::Object();
+  responseObj1.put("returnValue", true);
+  request.respond(responseObj1.stringify().c_str());
   return true;
 }
 
