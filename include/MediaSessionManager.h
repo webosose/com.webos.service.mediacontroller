@@ -21,6 +21,7 @@
     (File Inclusions)
 ------------------------------------------------------------------------------*/
 #include <map>
+#include <vector>
 #include "MediaControlTypes.h"
 #include "RequestReceiver.h"
 
@@ -29,7 +30,7 @@ class MediaSessionManager
 private:
   MediaSessionManager();
   std::map<std::string, mediaSession> mapMediaSessionInfo_;
-  RequestReceiver objRequestRcvr_;
+  RequestReceiver objRequestRcvr_[2];
 
 public:
   static MediaSessionManager &getInstance();
@@ -41,6 +42,9 @@ public:
   bool removeMediaSession (const std::string& mediaId);
   mediaMetaData getMediaMetaData(const std::string& mediaId);
   std::string getMediaPlayStatus(const std::string& mediaId);
+  std::vector<std::string> getActiveMediaSessions();
+  std::vector<std::string> getMediaSessionId(const std::string& appId);
+  mediaSession getMediaSessionInfo(const std::string& mediaId);
   //todo : add session related API's in nxc ccc
   std::string getActiveSessionbyDisplayId (const int& displayId);
 };

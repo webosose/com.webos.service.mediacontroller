@@ -36,6 +36,7 @@ public:
   std::string getLastActiveClient();
   bool setClientPriority(const std::string& mediaId, const int& priority);
   bool removeClient(const std::string& mediaId);
+  std::list<requestReceiver> getClientList() const { return clientListInfo_; }
 };
 
 #endif /*REQUEST_RECEIVER_H_*/

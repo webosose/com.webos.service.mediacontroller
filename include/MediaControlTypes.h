@@ -170,6 +170,21 @@ public:
   const int getDisplayId() const { return displayId_; }
   const int getVolume() const {return volume_; }
   const mediaMetaData getMediaMetaDataObj() const { return objMetaData_; }
+  void setMediaId(const std::string& mediaId) {
+    mediaId_ = mediaId;
+  }
+  void setAppId(const std::string& appId) {
+    appId_ = appId;
+  }
+  void setPlayStatus(const std::string& playStatus) {
+    playStatus_ = playStatus;
+  }
+  void setDisplayId(const int& displayId) {
+    displayId_ = displayId;
+  }
+  void setVolume(const int& volume) {
+    volume_ = volume;
+  }
 };
 
 struct BTDeviceInfo
