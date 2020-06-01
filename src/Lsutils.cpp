@@ -77,26 +77,13 @@ std::string createJsonReplyString(bool returnValue,
                                   int errorCode,
                                   const std::string& errorText) {
   pbnjson::JValue responseObj = pbnjson::Object();
-  if (returnValue) {
+  if (returnValue)
     responseObj.put("returnValue", returnValue);
-  }
-  else if (errorCode) {
-    if (!errorText.empty()) {
-      responseObj.put("returnValue", false);
-      responseObj.put("errorCode", errorCode);
-      responseObj.put("errorText", errorText);
-    }
-    else {
-      responseObj.put("returnValue", false);
-      responseObj.put("errorCode", errorCode);
-    }
-  }
-  else if (!errorText.empty()) {
+  else {
     responseObj.put("returnValue", false);
+    responseObj.put("errorCode", errorCode);
     responseObj.put("errorText", errorText);
   }
-  else
-    responseObj.put("returnValue", false);
 
   return responseObj.stringify();
 }

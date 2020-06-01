@@ -8,7 +8,9 @@
     "com.webos.service.mediacontroller/getMediaPlayStatus",
     "com.webos.service.mediacontroller/getMediaSessionInfo",
     "com.webos.service.mediacontroller/getMediaSessionId",
-    "com.webos.service.mediacontroller/getActiveMediaSessions"
+    "com.webos.service.mediacontroller/getActiveMediaSessions",
+    "com.webos.service.mediacontroller/setMediaMetaData",
+    "com.webos.service.mediacontroller/setMediaPlayStatus"
   ]
 }
 

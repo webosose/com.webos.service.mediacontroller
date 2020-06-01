@@ -42,8 +42,7 @@ const std::string CSTR_EMPTY = "";
 #define PMLOG_INFO(module, args...) PmLogMsg(getLunaPmLogContext(), Info, module, 0, ##args)
 #define PMLOG_DEBUG(args...) PmLogMsg(getLunaPmLogContext(), Debug, NULL, 0, ##args)
 
-enum MCSErrorCode
-{
+enum MCSErrorCode {
   MCS_ERROR_INVALID_MEDIAID = 0,
   MCS_ERROR_REGISTERSESSION_FAILED,
   MCS_ERROR_PARSING_FAILED,
@@ -52,8 +51,7 @@ enum MCSErrorCode
   MCS_ERROR_NO_ERROR
 };
 
-enum mediaPlayState
-{
+enum MediaPlayState {
   PLAY_STATE_NONE = 0,
   PLAY_STATE_STOPPED,
   PLAY_STATE_PAUSED,
@@ -64,8 +62,7 @@ enum mediaPlayState
   PLAY_STATE_ERROR
 };
 
-struct requestReceiver
-{
+struct requestReceiver {
   std::string mediaId_;
   int priority_;
   requestReceiver() :
@@ -76,8 +73,7 @@ struct requestReceiver
     priority_(priority) {}
 };
 
-class mediaMetaData
-{
+class mediaMetaData {
 private:
   std::string title_;
   std::string artist_;
@@ -85,6 +81,7 @@ private:
   std::string album_;
   std::string genre_;
   int trackNumber_;
+  int volume_;
 public:
   mediaMetaData() :
     title_(CSTR_EMPTY),
@@ -92,16 +89,18 @@ public:
     totalDuration_(CSTR_EMPTY),
     album_(CSTR_EMPTY),
     genre_(CSTR_EMPTY),
-    trackNumber_(0) {}
+    trackNumber_(0),
+    volume_(0) {}
   mediaMetaData(const std::string& title, const std::string& artist,
                 const std::string& duration, const std::string& album,
-                const std::string& genre, const int& trackNumber) :
+                const std::string& genre, const int& trackNumber, const int& volume) :
     title_(title),
     artist_(artist),
     totalDuration_(duration),
     album_(album),
     genre_(genre),
-    trackNumber_(trackNumber) {}
+    trackNumber_(trackNumber),
+    volume_(volume) {}
 
   const std::string getTitle() const {return title_;}
   const std::string getArtist() const {return artist_;}
@@ -109,6 +108,7 @@ public:
   const std::string getAlbum() const {return album_;}
   const std::string getGenre() const {return genre_;}
   const int getTrackNumber() const {return trackNumber_;}
+  const int getVolume() const {return volume_;}
 
   void setTitle(const std::string& title) {
     title_ = title;
@@ -128,6 +128,9 @@ public:
   void setTrackNumber(const int& trackNum) {
     trackNumber_ = trackNum;
   }
+  void setVolume(const int& volume) {
+    volume_ = volume;
+  }
 };
 
 class mediaSession {
@@ -136,31 +139,19 @@ private:
   std::string appId_;
   std::string playStatus_;
   int displayId_;
-  int volume_;
   mediaMetaData objMetaData_;
 public:
   mediaSession() :
     mediaId_(CSTR_EMPTY),
     appId_(CSTR_EMPTY),
     playStatus_(CSTR_EMPTY),
-    displayId_(0),
-    volume_(0) {}
+    displayId_(0) {}
   mediaSession(const std::string& mediaId, const std::string& appId,
-               const int displayId = 0, const int volume = 0) :
+               const int displayId = 0) :
     mediaId_(mediaId),
     appId_(appId),
     playStatus_(CSTR_EMPTY),
-    displayId_(displayId),
-    volume_(volume) {}
-
-  void setMetaData(const mediaMetaData& objMetaData) {
-    objMetaData_.setTitle(objMetaData.getTitle());
-    objMetaData_.setArtist(objMetaData.getArtist());
-    objMetaData_.setDuration(objMetaData.getDuration());
-    objMetaData_.setAlbum(objMetaData.getAlbum());
-    objMetaData_.setGenre(objMetaData.getGenre());
-    objMetaData_.setTrackNumber(objMetaData.getTrackNumber());
-  }
+    displayId_(displayId) {}
 
   const std::string getMediaId() const { return mediaId_; }
   const std::string getAppId() const { return appId_; }
@@ -168,8 +159,8 @@ public:
     return playStatus_; //todo : add mapping of playstatus string to enum
   }
   const int getDisplayId() const { return displayId_; }
-  const int getVolume() const {return volume_; }
   const mediaMetaData getMediaMetaDataObj() const { return objMetaData_; }
+
   void setMediaId(const std::string& mediaId) {
     mediaId_ = mediaId;
   }
@@ -182,13 +173,18 @@ public:
   void setDisplayId(const int& displayId) {
     displayId_ = displayId;
   }
-  void setVolume(const int& volume) {
-    volume_ = volume;
+  void setMetaData(const mediaMetaData& objMetaData) {
+    objMetaData_.setTitle(objMetaData.getTitle());
+    objMetaData_.setArtist(objMetaData.getArtist());
+    objMetaData_.setDuration(objMetaData.getDuration());
+    objMetaData_.setAlbum(objMetaData.getAlbum());
+    objMetaData_.setGenre(objMetaData.getGenre());
+    objMetaData_.setTrackNumber(objMetaData.getTrackNumber());
+    objMetaData_.setVolume(objMetaData.getVolume());
   }
 };
 
-struct BTDeviceInfo
-{
+struct BTDeviceInfo {
   std::string deviceAddress_;
   std::string adapterAddress_;
   int displayId_;
@@ -204,8 +200,7 @@ struct BTDeviceInfo
   {}
 };
 
-static PmLogContext getLunaPmLogContext()
-{
+static PmLogContext getLunaPmLogContext() {
   static PmLogContext logContext = 0;
   if (0 == logContext)
     PmLogGetContext("mediacontroller", &logContext);

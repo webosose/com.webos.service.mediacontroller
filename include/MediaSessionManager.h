@@ -35,17 +35,22 @@ private:
 public:
   static MediaSessionManager &getInstance();
   void addMediaSession (const std::string& mediaId,
-                        const std::string& appId,
-                        const mediaMetaData& obj);
+                        const std::string& appId);
   bool activateMediaSession (const std::string& mediaId);
   bool deactivateMediaSession (const std::string& mediaId);
   bool removeMediaSession (const std::string& mediaId);
-  mediaMetaData getMediaMetaData(const std::string& mediaId);
-  std::string getMediaPlayStatus(const std::string& mediaId);
-  std::vector<std::string> getActiveMediaSessions();
+  bool getMediaMetaData(const std::string& mediaId,
+                        mediaMetaData& objMetaData);
+  bool getMediaSessionInfo(const std::string& mediaId,
+                           mediaSession& objMediaSession);
+  bool getMediaPlayStatus(const std::string& mediaId,
+                          std::string& playStatus);
+  bool setMediaMetaData(const std::string& mediaId,
+                        const mediaMetaData& objMetaData);
+  bool setMediaPlayStatus(const std::string& mediaId,
+                          const std::string& playStatus);
   std::vector<std::string> getMediaSessionId(const std::string& appId);
-  mediaSession getMediaSessionInfo(const std::string& mediaId);
-  //todo : add session related API's in nxc ccc
+  std::vector<std::string> getActiveMediaSessions();
   std::string getActiveSessionbyDisplayId (const int& displayId);
 };
 

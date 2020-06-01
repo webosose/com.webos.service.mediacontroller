@@ -27,6 +27,17 @@ MediaSessionManager& MediaSessionManager::getInstance() {
   return objMediaSessionMgr;
 }
 
+void MediaSessionManager::addMediaSession (const std::string& mediaId,
+                                           const std::string& appId) {
+  PMLOG_INFO(CONST_MODULE_MSM, "%s mediaId : %s , appId : %s", __FUNCTION__, mediaId.c_str(), appId.c_str());
+  int displayId = 0;
+  //create mediaSession object : todo : get displayId from ums
+  mediaSession objMediaSession(mediaId, appId, false);
+  mapMediaSessionInfo_[mediaId] = objMediaSession;
+  //add mediaId to receiver stack
+  objRequestRcvr_[displayId].addClient(mediaId);
+}
+
 bool MediaSessionManager::activateMediaSession (const std::string& mediaId) {
   PMLOG_INFO(CONST_MODULE_MSM, "%s mediaId : %s", __FUNCTION__, mediaId.c_str());
   for (const auto& itr : mapMediaSessionInfo_) {
@@ -35,21 +46,8 @@ bool MediaSessionManager::activateMediaSession (const std::string& mediaId) {
       return true;
     }
   }
+  PMLOG_ERROR(CONST_MODULE_MSM, "%s MediaId doesnt exists", __FUNCTION__);
   return false;
-}
-
-void MediaSessionManager::addMediaSession (const std::string& mediaId,
-                                           const std::string& appId,
-                                           const mediaMetaData& objMetaData) {
-  PMLOG_INFO(CONST_MODULE_MSM, "%s mediaId : %s , appId : %s", __FUNCTION__, mediaId.c_str(), appId.c_str());
-  int displayId;
-  //create mediaSession object : todo : get displayId from ums
-  mediaSession objMediaSession(mediaId, appId, false);
-  //save metadata info
-  objMediaSession.setMetaData(objMetaData);
-  mapMediaSessionInfo_[mediaId] = objMediaSession;
-  //add mediaId to receiver stack
-  objRequestRcvr_[displayId].addClient(mediaId);
 }
 
 bool MediaSessionManager::deactivateMediaSession (const std::string& mediaId) {
@@ -61,6 +59,7 @@ bool MediaSessionManager::deactivateMediaSession (const std::string& mediaId) {
       return true;
     }
   }
+  PMLOG_ERROR(CONST_MODULE_MSM, "%s MediaId doesnt exists", __FUNCTION__);
   return false;
 }
 
@@ -74,49 +73,95 @@ bool MediaSessionManager::removeMediaSession (const std::string& mediaId) {
       return true;
     }
   }
+  PMLOG_ERROR(CONST_MODULE_MSM, "%s MediaId doesnt exists", __FUNCTION__);
   return false;
 }
 
-mediaMetaData MediaSessionManager::getMediaMetaData(const std::string& mediaId) {
-  PMLOG_INFO(CONST_MODULE_MSM, "%s mediaId : %s", __FUNCTION__, mediaId);
+bool MediaSessionManager::getMediaMetaData(const std::string& mediaId,
+                                           mediaMetaData& objMetaData) {
+  PMLOG_INFO(CONST_MODULE_MSM, "%s mediaId : %s", __FUNCTION__, mediaId.c_str());
 
-  mediaMetaData objMetaData;
   for(const auto& itr : mapMediaSessionInfo_) {
     if(itr.first == mediaId) {
       objMetaData = itr.second.getMediaMetaDataObj();
-      break;
+      return true;
     }
   }
-  return objMetaData;
+  PMLOG_ERROR(CONST_MODULE_MSM, "%s MediaId doesnt exists", __FUNCTION__);
+  return false;
 }
 
-std::string MediaSessionManager::getMediaPlayStatus(const std::string& mediaId) {
-  PMLOG_INFO(CONST_MODULE_MSM, "%s mediaId : %s", __FUNCTION__, mediaId);
+bool MediaSessionManager::getMediaSessionInfo(const std::string& mediaId,
+                                              mediaSession& objMediaSession) {
+  PMLOG_INFO(CONST_MODULE_MSM, "%s mediaId : %s", __FUNCTION__, mediaId.c_str());
 
-  std::string playStatus;
+  for(const auto& itr : mapMediaSessionInfo_) {
+    if(itr.first == mediaId) {
+      objMediaSession.setMediaId(itr.first);
+      objMediaSession.setAppId(itr.second.getAppId());
+      objMediaSession.setPlayStatus(itr.second.getPlayStatus());
+      objMediaSession.setDisplayId(itr.second.getDisplayId());
+      objMediaSession.setMetaData(itr.second.getMediaMetaDataObj());
+      return true;
+    }
+  }
+  PMLOG_ERROR(CONST_MODULE_MSM, "%s MediaId doesnt exists", __FUNCTION__);
+  return false;
+}
+
+bool MediaSessionManager::getMediaPlayStatus(const std::string& mediaId,
+                                             std::string& playStatus) {
+  PMLOG_INFO(CONST_MODULE_MSM, "%s mediaId : %s", __FUNCTION__, mediaId.c_str());
+
   for(const auto& itr : mapMediaSessionInfo_) {
     if(itr.first == mediaId) {
       playStatus = itr.second.getPlayStatus();
-      break;
+      return true;
     }
   }
-  return playStatus;
+  PMLOG_ERROR(CONST_MODULE_MSM, "%s MediaId doesnt exists", __FUNCTION__);
+  return false;
 }
 
-std::string MediaSessionManager::getActiveSessionbyDisplayId (const int& displayId) {
-  return objRequestRcvr_[displayId].getLastActiveClient();
+bool MediaSessionManager::setMediaMetaData(const std::string& mediaId,
+                                           const mediaMetaData& objMetaData) {
+  PMLOG_INFO(CONST_MODULE_MSM, "%s mediaId : %s", __FUNCTION__, mediaId.c_str());
+  for(auto& itr : mapMediaSessionInfo_) {
+    if(itr.first == mediaId) {
+      //save metadata info
+      itr.second.setMetaData(objMetaData);
+      return true;
+    }
+  }
+  PMLOG_ERROR(CONST_MODULE_MSM, "%s MediaId doesnt exists", __FUNCTION__);
+  return false;
+}
+
+bool MediaSessionManager::setMediaPlayStatus(const std::string& mediaId,
+                                             const std::string& playStatus) {
+  PMLOG_INFO(CONST_MODULE_MSM, "%s mediaId : %s playStatus", __FUNCTION__,
+                                mediaId.c_str(), playStatus.c_str());
+
+  for(auto& itr : mapMediaSessionInfo_) {
+    if(itr.first == mediaId) {
+      itr.second.setPlayStatus(playStatus);
+      return true;
+    }
+  }
+  PMLOG_ERROR(CONST_MODULE_MSM, "%s MediaId doesnt exists", __FUNCTION__);
+  return false;
 }
 
 std::vector<std::string> MediaSessionManager::getActiveMediaSessions() {
+  PMLOG_INFO(CONST_MODULE_MSM, "%s", __FUNCTION__);
   std::vector<std::string> activeMediaId;
-  for (auto itr = objRequestRcvr_[0].getClientList().begin(); itr != objRequestRcvr_[0].getClientList().end(); itr++ ) {
-       if(itr->priority_ == SET)
-         activeMediaId.push_back(itr->mediaId_);
-  }
 
-  for (auto itr = objRequestRcvr_[1].getClientList().begin(); itr != objRequestRcvr_[1].getClientList().end(); itr++) {
-       if(itr->priority_ == SET)
-         activeMediaId.push_back(itr->mediaId_);
+  for(int displayId = 0; displayId < 2; displayId++) {
+    for (const auto& itr : objRequestRcvr_[displayId].getClientList()) {
+       PMLOG_INFO(CONST_MODULE_MSM, "%s", __FUNCTION__);
+       if(itr.priority_ == SET)
+         activeMediaId.push_back(itr.mediaId_);
+    }
   }
 
   return activeMediaId;
@@ -132,17 +177,6 @@ std::vector<std::string> MediaSessionManager::getMediaSessionId(const std::strin
   return mediaSessionId;
 }
 
-mediaSession MediaSessionManager::getMediaSessionInfo(const std::string& mediaId) {
-  mediaSession objMediaSession;
-  for(const auto& itr : mapMediaSessionInfo_) {
-    if(itr.first == mediaId) {
-      objMediaSession.setMediaId(itr.first);
-      objMediaSession.setAppId(itr.second.getAppId());
-      objMediaSession.setPlayStatus(itr.second.getPlayStatus());
-      objMediaSession.setDisplayId(itr.second.getDisplayId());
-      objMediaSession.setVolume(itr.second.getVolume());
-      objMediaSession.setMetaData(itr.second.getMediaMetaDataObj());
-    }
-  }
-  return objMediaSession;
+std::string MediaSessionManager::getActiveSessionbyDisplayId (const int& displayId) {
+  return objRequestRcvr_[displayId].getLastActiveClient();
 }
