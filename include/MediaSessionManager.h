@@ -30,7 +30,7 @@ class MediaSessionManager
 private:
   MediaSessionManager();
   std::map<std::string, mediaSession> mapMediaSessionInfo_;
-  RequestReceiver objRequestRcvr_[2];
+  RequestReceiver objRequestRcvr_;
 
 public:
   static MediaSessionManager &getInstance();
@@ -49,9 +49,9 @@ public:
                         const mediaMetaData& objMetaData);
   bool setMediaPlayStatus(const std::string& mediaId,
                           const std::string& playStatus);
-  std::vector<std::string> getMediaSessionId(const std::string& appId);
-  std::vector<std::string> getActiveMediaSessions();
-  std::string getActiveSessionbyDisplayId (const int& displayId);
+  std::vector<std::string> getMediaSessionList(const std::string& appId);
+  std::vector<std::string> getActiveMediaSessionList();
+  std::string getCurrentActiveSession();
 };
 
 #endif /*MEDIA_SESSION_MANAGER_H_*/

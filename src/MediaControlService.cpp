@@ -658,7 +658,7 @@ bool MediaControlService::getMediaSessionId(LSMessage& message) {
   //get media list from MSM
   std::vector<std::string> strMediaSessionIdList;
   if(ptrMediaSessionMgr_)
-    strMediaSessionIdList = ptrMediaSessionMgr_->getMediaSessionId(appId);
+    strMediaSessionIdList = ptrMediaSessionMgr_->getMediaSessionList(appId);
 
   bool returnValue = false;
   if(strMediaSessionIdList.size())
@@ -703,7 +703,7 @@ bool MediaControlService::getActiveMediaSessions(LSMessage& message) {
   //get active sessions list from MSM
   std::vector<std::string> strActiveMediaSessionList;
   if(ptrMediaSessionMgr_)
-    strActiveMediaSessionList = ptrMediaSessionMgr_->getActiveMediaSessions();
+    strActiveMediaSessionList = ptrMediaSessionMgr_->getActiveMediaSessionList();
 
   bool returnValue = false;
   if(strActiveMediaSessionList.size())

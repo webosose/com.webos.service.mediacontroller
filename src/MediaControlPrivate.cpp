@@ -40,7 +40,7 @@ std::string MediaControlPrivate::getMediaId(const std::string& deviceAddress) {
   std::string mediaId;
   for(const auto& itr : mapDeviceInfo_) {
     if(itr.first == deviceAddress) {
-      mediaId = MediaSessionManager::getInstance().getActiveSessionbyDisplayId(itr.second.displayId_);
+      mediaId = MediaSessionManager::getInstance().getCurrentActiveSession();
       return mediaId;
     }
   }

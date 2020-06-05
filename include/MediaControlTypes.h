@@ -138,27 +138,22 @@ private:
   std::string mediaId_;
   std::string appId_;
   std::string playStatus_;
-  int displayId_;
   mediaMetaData objMetaData_;
 public:
   mediaSession() :
     mediaId_(CSTR_EMPTY),
     appId_(CSTR_EMPTY),
-    playStatus_(CSTR_EMPTY),
-    displayId_(0) {}
-  mediaSession(const std::string& mediaId, const std::string& appId,
-               const int displayId = 0) :
+    playStatus_(CSTR_EMPTY) {}
+  mediaSession(const std::string& mediaId, const std::string& appId) :
     mediaId_(mediaId),
     appId_(appId),
-    playStatus_(CSTR_EMPTY),
-    displayId_(displayId) {}
+    playStatus_(CSTR_EMPTY) {}
 
   const std::string getMediaId() const { return mediaId_; }
   const std::string getAppId() const { return appId_; }
   const std::string getPlayStatus() const {
-    return playStatus_; //todo : add mapping of playstatus string to enum
+    return playStatus_;
   }
-  const int getDisplayId() const { return displayId_; }
   const mediaMetaData getMediaMetaDataObj() const { return objMetaData_; }
 
   void setMediaId(const std::string& mediaId) {
@@ -169,9 +164,6 @@ public:
   }
   void setPlayStatus(const std::string& playStatus) {
     playStatus_ = playStatus;
-  }
-  void setDisplayId(const int& displayId) {
-    displayId_ = displayId;
   }
   void setMetaData(const mediaMetaData& objMetaData) {
     objMetaData_.setTitle(objMetaData.getTitle());
