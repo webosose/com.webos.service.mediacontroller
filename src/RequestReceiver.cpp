@@ -102,3 +102,16 @@ bool RequestReceiver::setClientPriority (const std::string& mediaId, const int& 
   }
   return false;
 }
+
+
+int RequestReceiver::getClientPriority (const std::string& mediaId) {
+  int priority = RESET;
+  std::list<requestReceiver>::iterator itr = clientListInfo_.begin();
+  for (; itr != clientListInfo_.end(); itr++) {
+    if (itr->mediaId_ == mediaId) {
+      priority = itr->priority_;
+      break;
+    }
+  }
+  return priority;
+}
