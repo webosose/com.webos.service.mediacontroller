@@ -31,6 +31,7 @@ const std::string CSTR_NO_ACTIVE_SESSION = "No session is active";
 const std::string CSTR_SESSION_ALREADY_REGISTERED = "Media session already registered";
 const std::string CSTR_SESSION_ALREADY_ACTIVE = "Media session already active";
 const std::string CSTR_SESSION_ALREADY_DEACTIVE = "Media session already deactivated";
+const std::string CSTR_SESSION_INVALID_PLAY_STATE = "Invalid Play State";
 const std::string CSTR_EMPTY = "";
 
 #define CONST_MODULE_MCS "MediaControlService"
@@ -54,6 +55,7 @@ enum MCSErrorCode {
   MCS_ERROR_SESSION_ALREADY_REGISTERED,
   MCS_ERROR_SESSION_ALREADY_ACTIVE,
   MCS_ERROR_SESSION_ALREADY_DEACTIVE,
+  MCS_ERROR_SESSION_INVALID_PLAY_STATE,
   MCS_ERROR_NO_ERROR
 };
 
@@ -216,6 +218,8 @@ static std::string getErrorTextFromErrorCode(const int& errorCode) {
       return CSTR_SESSION_ALREADY_ACTIVE;
     case MCS_ERROR_SESSION_ALREADY_DEACTIVE:
       return CSTR_SESSION_ALREADY_DEACTIVE;
+    case MCS_ERROR_SESSION_INVALID_PLAY_STATE:
+      return CSTR_SESSION_INVALID_PLAY_STATE;
     default:
       return CSTR_EMPTY;
   }

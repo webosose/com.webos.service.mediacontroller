@@ -52,6 +52,7 @@ public:
   std::vector<std::string> getMediaSessionList(const std::string& appId);
   std::vector<std::string> getActiveMediaSessionList();
   std::string getCurrentActiveSession();
+  bool validatePlayStatus(const std::string& playStatus);
 };
 
 #endif /*MEDIA_SESSION_MANAGER_H_*/

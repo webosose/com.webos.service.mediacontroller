@@ -157,6 +157,11 @@ int MediaSessionManager::setMediaPlayStatus(const std::string& mediaId,
   PMLOG_INFO(CONST_MODULE_MSM, "%s mediaId : %s playStatus : %s", __FUNCTION__,
                                 mediaId.c_str(), playStatus.c_str());
 
+  if(!validatePlayStatus(playStatus)){
+    PMLOG_ERROR(CONST_MODULE_MSM, "%s Invalid Play State ", __FUNCTION__);
+    return MCS_ERROR_SESSION_INVALID_PLAY_STATE;
+  }
+
   for(auto& itr : mapMediaSessionInfo_) {
     if(itr.first == mediaId) {
       itr.second.setPlayStatus(playStatus);
@@ -191,4 +196,18 @@ std::vector<std::string> MediaSessionManager::getMediaSessionList(const std::str
 
 std::string MediaSessionManager::getCurrentActiveSession() {
   return objRequestRcvr_.getLastActiveClient();
+}
+
+bool MediaSessionManager::validatePlayStatus(const std::string& playStatus) {
+  if( (playStatus == "PLAYSTATE_NONE") ||
+      (playStatus == "PLAYSTATE_STOPPED") ||
+      (playStatus == "PLAYSTATE_PAUSED") ||
+      (playStatus == "PLAYSTATE_PLAYING") ||
+      (playStatus == "PLAYSTATE_FAST_FORWARDING") ||
+      (playStatus == "PLAYSTATE_REWINDING") ||
+      (playStatus == "PLAYSTATE_BUFFERING") ||
+      (playStatus == "PLAYSTATE_ERROR") )
+    return true;
+  else
+    return false;
 }
