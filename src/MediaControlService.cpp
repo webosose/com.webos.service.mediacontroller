@@ -106,8 +106,7 @@ bool MediaControlService::onBTAdapterQueryCb(LSHandle *lshandle, LSMessage *mess
       std::string adapterAddress = adapters[i]["adapterAddress"].asString();
       PMLOG_INFO(CONST_MODULE_MCS,"%s : adapterName : %s, adapterAddress : %s",
                                    __FUNCTION__, adapterName.c_str(), adapterAddress.c_str());
-      if ( ("sa8155 Bluetooth hci0" == adapterName) ||
-          ("raspberrypi4 #2" == adapterName) || ("raspberrypi4" == adapterName)) {//todo : to be removed in final ccc
+      if ("sa8155 Bluetooth hci0" == adapterName) {
         if (defaultAdapterAddress_ != adapterAddress) {
           defaultAdapterAddress_ = adapterAddress;
           std::string payload = "{\"adapterAddress\":\"" + adapterAddress + "\",\"subscribe\":true}";
