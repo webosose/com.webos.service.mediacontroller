@@ -28,14 +28,14 @@
 class RequestReceiver
 {
 private:
-  std::list<requestReceiver> clientListInfo_;
+  std::list<std::string> clientListInfo_;
 
 public:
   RequestReceiver();
   void addClient(const std::string& mediaId);
+  void removeClient(const std::string& mediaId);
   std::string getLastActiveClient();
-  bool setClientPriority(const std::string& mediaId, const int& priority);
-  bool removeClient(const std::string& mediaId);
+  std::list<std::string> getClientList() const { return clientListInfo_; }
 };
 
 #endif /*REQUEST_RECEIVER_H_*/

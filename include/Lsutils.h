@@ -42,7 +42,8 @@
 #define SCHEMA_8(p1, p2, p3, p4, p5, p6, p7, p8) "{\"type\":\"object\",\"properties\":{" p1 "," p2 "," p3 "," p4 "," p5 "," p6 "," p7 "," p8 "," SYSTEM_PARAMETERS "},\"additionalProperties\":false}"
 #define SCHEMA_9(p1, p2, p3, p4, p5, p6, p7, p8, p9) "{\"type\":\"object\",\"properties\":{" p1 "," p2 "," p3 "," p4 "," p5 "," p6 "," p7 "," p8 "," p9 "," SYSTEM_PARAMETERS "},\"additionalProperties\":false}"
 #define OBJECT(name, objschema) "\"" #name "\":" objschema
-#define OBJSCHEMA_2(p1, p2) "{\"type\":\"object\",\"properties\":{" p1 "," p2 "}}"
+#define OBJSCHEMA_4(p1, p2, p3, p4) "{\"type\":\"object\",\"properties\":{" p1 "," p2 "," p3 "," p4 "}}"
+#define OBJSCHEMA_7(p1, p2, p3, p4, p5, p6, p7) "{\"type\":\"object\",\"properties\":{" p1 "," p2 "," p3 "," p4 "," p5 "," p6 "," p7 "}}"
 #define PROPS_2(p1, p2) ",\"properties\":{" p1 "," p2 "}"
 #define STRICT_SCHEMA(attributes) "{\"type\":\"object\"" attributes ",\"additionalProperties\":false}"
 #define REQUIRED_2(p1, p2) ",\"required\":[\"" #p1 "\",\"" #p2 "\"]"

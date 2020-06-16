@@ -27,51 +27,166 @@ MediaSessionManager& MediaSessionManager::getInstance() {
   return objMediaSessionMgr;
 }
 
-bool MediaSessionManager::activateMediaSession (const std::string& mediaId) {
-  PMLOG_INFO(CONST_MODULE_MSM, "%s mediaId : %s", __FUNCTION__, mediaId.c_str());
-  for (const auto& itr : mapMediaSessionInfo_) {
-    if(itr.first == mediaId) {
-      objRequestRcvr_.setClientPriority(mediaId, SET);
-      return true;
-    }
-  }
-  return false;
-}
-
-void MediaSessionManager::addMediaSession (const std::string& mediaId, const std::string& appId) {
+int MediaSessionManager::addMediaSession (const std::string& mediaId,
+                                           const std::string& appId) {
   PMLOG_INFO(CONST_MODULE_MSM, "%s mediaId : %s , appId : %s", __FUNCTION__, mediaId.c_str(), appId.c_str());
-  //create mediaSession object : todo : get displayId from ums
-  mediaSession objMediaSession(mediaId, appId, false);
+  const auto& itr = mapMediaSessionInfo_.find(mediaId);
+  if(itr != mapMediaSessionInfo_.end()) {
+    PMLOG_ERROR(CONST_MODULE_MSM, "%s mediaId already regsitered", __FUNCTION__);
+    return MCS_ERROR_SESSION_ALREADY_REGISTERED;
+  }
+
+  mediaSession objMediaSession(mediaId, appId);
   mapMediaSessionInfo_[mediaId] = objMediaSession;
-  //add mediaId to receiver stack
-  objRequestRcvr_.addClient(mediaId);
+  return MCS_ERROR_NO_ERROR;
 }
 
-bool MediaSessionManager::deactivateMediaSession (const std::string& mediaId) {
+int MediaSessionManager::activateMediaSession (const std::string& mediaId) {
   PMLOG_INFO(CONST_MODULE_MSM, "%s mediaId : %s", __FUNCTION__, mediaId.c_str());
+  const auto& itr = mapMediaSessionInfo_.find(mediaId);
+  if(itr != mapMediaSessionInfo_.end()) {
+    //add mediaId to receiver stack
+    objRequestRcvr_.addClient(mediaId);
+    return MCS_ERROR_NO_ERROR;
+  }
+
+  PMLOG_ERROR(CONST_MODULE_MSM, "%s MediaId doesnt exists", __FUNCTION__);
+  return MCS_ERROR_INVALID_MEDIAID;
+}
+
+int MediaSessionManager::deactivateMediaSession (const std::string& mediaId) {
+  PMLOG_INFO(CONST_MODULE_MSM, "%s mediaId : %s", __FUNCTION__, mediaId.c_str());
+  const auto& itr = mapMediaSessionInfo_.find(mediaId);
+  if(itr != mapMediaSessionInfo_.end()) {
+    //delete media client from receiver stack
+    objRequestRcvr_.removeClient(mediaId);
+  }
+  PMLOG_ERROR(CONST_MODULE_MSM, "%s MediaId doesnt exists", __FUNCTION__);
+  return MCS_ERROR_INVALID_MEDIAID;
+}
+
+int MediaSessionManager::removeMediaSession (const std::string& mediaId) {
+  PMLOG_INFO(CONST_MODULE_MSM, "%s mediaId : %s", __FUNCTION__, mediaId.c_str());
+  const auto& itr = mapMediaSessionInfo_.find(mediaId);
+  if(itr != mapMediaSessionInfo_.end()) {
+    mapMediaSessionInfo_.erase(itr->first);
+    //delete media client from receiver stack
+    objRequestRcvr_.removeClient(mediaId);
+    return MCS_ERROR_NO_ERROR;
+  }
+  PMLOG_ERROR(CONST_MODULE_MSM, "%s MediaId doesnt exists", __FUNCTION__);
+  return MCS_ERROR_INVALID_MEDIAID;
+}
+
+int MediaSessionManager::getMediaMetaData(const std::string& mediaId,
+                                           mediaMetaData& objMetaData) {
+  PMLOG_INFO(CONST_MODULE_MSM, "%s mediaId : %s", __FUNCTION__, mediaId.c_str());
+  const auto& itr = mapMediaSessionInfo_.find(mediaId);
+  if(itr != mapMediaSessionInfo_.end()) {
+    objMetaData = itr->second.getMediaMetaDataObj();
+    return MCS_ERROR_NO_ERROR;
+  }
+
+  PMLOG_ERROR(CONST_MODULE_MSM, "%s MediaId doesnt exists", __FUNCTION__);
+  return MCS_ERROR_INVALID_MEDIAID;
+}
+
+int MediaSessionManager::getMediaSessionInfo(const std::string& mediaId,
+                                              mediaSession& objMediaSession) {
+  PMLOG_INFO(CONST_MODULE_MSM, "%s mediaId : %s", __FUNCTION__, mediaId.c_str());
+
+  const auto& itr = mapMediaSessionInfo_.find(mediaId);
+  if(itr != mapMediaSessionInfo_.end()) {
+    objMediaSession.setMediaId(itr->first);
+    objMediaSession.setAppId(itr->second.getAppId());
+    objMediaSession.setPlayStatus(itr->second.getPlayStatus());
+    objMediaSession.setMetaData(itr->second.getMediaMetaDataObj());
+    return MCS_ERROR_NO_ERROR;
+  }
+
+  PMLOG_ERROR(CONST_MODULE_MSM, "%s MediaId doesnt exists", __FUNCTION__);
+  return MCS_ERROR_INVALID_MEDIAID;
+}
+
+int MediaSessionManager::getMediaPlayStatus(const std::string& mediaId,
+                                             std::string& playStatus) {
+  PMLOG_INFO(CONST_MODULE_MSM, "%s mediaId : %s", __FUNCTION__, mediaId.c_str());
+
+  const auto& itr = mapMediaSessionInfo_.find(mediaId);
+  if(itr != mapMediaSessionInfo_.end()) {
+    playStatus = itr->second.getPlayStatus();
+    return MCS_ERROR_NO_ERROR;
+  }
+  PMLOG_ERROR(CONST_MODULE_MSM, "%s MediaId doesnt exists", __FUNCTION__);
+  return MCS_ERROR_INVALID_MEDIAID;
+}
+
+int MediaSessionManager::setMediaMetaData(const std::string& mediaId,
+                                           const mediaMetaData& objMetaData) {
+  PMLOG_INFO(CONST_MODULE_MSM, "%s mediaId : %s", __FUNCTION__, mediaId.c_str());
+  const auto& itr = mapMediaSessionInfo_.find(mediaId);
+  if(itr != mapMediaSessionInfo_.end()) {
+    //save metadata info
+    itr->second.setMetaData(objMetaData);
+    return MCS_ERROR_NO_ERROR;
+  }
+  PMLOG_ERROR(CONST_MODULE_MSM, "%s MediaId doesnt exists", __FUNCTION__);
+  return MCS_ERROR_INVALID_MEDIAID;
+}
+
+int MediaSessionManager::setMediaPlayStatus(const std::string& mediaId,
+                                             const std::string& playStatus) {
+  PMLOG_INFO(CONST_MODULE_MSM, "%s mediaId : %s playStatus : %s", __FUNCTION__,
+                                mediaId.c_str(), playStatus.c_str());
+
+  if(!validatePlayStatus(playStatus)){
+    PMLOG_ERROR(CONST_MODULE_MSM, "%s Invalid Play State ", __FUNCTION__);
+    return MCS_ERROR_SESSION_INVALID_PLAY_STATE;
+  }
+
+  const auto& itr = mapMediaSessionInfo_.find(mediaId);
+  if(itr != mapMediaSessionInfo_.end()) {
+    itr->second.setPlayStatus(playStatus);
+    return MCS_ERROR_NO_ERROR;
+  }
+  PMLOG_ERROR(CONST_MODULE_MSM, "%s MediaId doesnt exists", __FUNCTION__);
+  return MCS_ERROR_INVALID_MEDIAID;
+}
+
+std::vector<std::string> MediaSessionManager::getActiveMediaSessionList() {
+  PMLOG_INFO(CONST_MODULE_MSM, "%s", __FUNCTION__);
+  std::vector<std::string> activeMediaId;
+
+  for (const auto& itr : objRequestRcvr_.getClientList())
+    activeMediaId.push_back(itr);
+
+  return activeMediaId;
+}
+
+std::vector<std::string> MediaSessionManager::getMediaSessionList(const std::string& appId) {
+  std::vector<std::string> mediaSessionId;
   for (const auto& itr : mapMediaSessionInfo_) {
-    if(itr.first == mediaId) {
-      //reset priority of media client in receiver stack
-      objRequestRcvr_.setClientPriority(mediaId, RESET);
-      return true;
+    if(appId == itr.second.getAppId()) {
+      mediaSessionId.push_back(itr.first);
     }
   }
-  return false;
+  return mediaSessionId;
 }
 
-bool MediaSessionManager::removeMediaSession (const std::string& mediaId) {
-  PMLOG_INFO(CONST_MODULE_MSM, "%s mediaId : %s", __FUNCTION__, mediaId.c_str());
-  for (const auto& itr : mapMediaSessionInfo_) {
-    if(itr.first == mediaId) {
-      mapMediaSessionInfo_.erase(itr.first);
-      //delete media client from receiver stack
-      objRequestRcvr_.removeClient(mediaId);
-      return true;
-    }
-  }
-  return false;
-}
-
-std::string MediaSessionManager::getActiveSessionbyDisplayId (const int& displayId) {
+std::string MediaSessionManager::getCurrentActiveSession() {
   return objRequestRcvr_.getLastActiveClient();
+}
+
+bool MediaSessionManager::validatePlayStatus(const std::string& playStatus) {
+  if( (playStatus == "PLAYSTATE_NONE") ||
+      (playStatus == "PLAYSTATE_STOPPED") ||
+      (playStatus == "PLAYSTATE_PAUSED") ||
+      (playStatus == "PLAYSTATE_PLAYING") ||
+      (playStatus == "PLAYSTATE_FAST_FORWARDING") ||
+      (playStatus == "PLAYSTATE_REWINDING") ||
+      (playStatus == "PLAYSTATE_BUFFERING") ||
+      (playStatus == "PLAYSTATE_ERROR") )
+    return true;
+  else
+    return false;
 }

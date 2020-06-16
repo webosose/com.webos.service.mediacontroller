@@ -49,6 +49,9 @@ MediaControlService::MediaControlService()
   LS_CATEGORY_METHOD(getMediaSessionInfo)
   LS_CATEGORY_METHOD(getMediaSessionId)
   LS_CATEGORY_METHOD(getActiveMediaSessions)
+  LS_CATEGORY_METHOD(setMediaMetaData)
+  LS_CATEGORY_METHOD(setMediaPlayStatus)
+  LS_CATEGORY_METHOD(testKeyEvent)
   LS_CATEGORY_END;
 
   // attach to mainloop and run it
@@ -103,9 +106,7 @@ bool MediaControlService::onBTAdapterQueryCb(LSHandle *lshandle, LSMessage *mess
       std::string adapterAddress = adapters[i]["adapterAddress"].asString();
       PMLOG_INFO(CONST_MODULE_MCS,"%s : adapterName : %s, adapterAddress : %s",
                                    __FUNCTION__, adapterName.c_str(), adapterAddress.c_str());
-      if ( ("sa8155 Bluetooth hci0" == adapterName) ||
-          ("raspberrypi4 #2" == adapterName) || ("raspberrypi4" == adapterName)) {//todo : to be removed in final ccc
-        bool defaultValue = adapters[i]["default"].asBool();
+      if ("sa8155 Bluetooth hci0" == adapterName) {
         if (defaultAdapterAddress_ != adapterAddress) {
           defaultAdapterAddress_ = adapterAddress;
           std::string payload = "{\"adapterAddress\":\"" + adapterAddress + "\",\"subscribe\":true}";
@@ -292,7 +293,7 @@ bool MediaControlService::onBTAvrcpKeyEventsCb(LSHandle *lshandle, LSMessage *me
           responseObj.put("subscribed", true);
           PMLOG_INFO(CONST_MODULE_MCS, "%s send subscription response :%s", __FUNCTION__, responseObj.stringify().c_str());
           CLSError lserror;
-          if (!LSSubscriptionReply(obj->lsHandle_,"/registerMediaSession" , responseObj.stringify().c_str(), &lserror))
+          if (!LSSubscriptionReply(obj->lsHandle_,"registerMediaSession" , responseObj.stringify().c_str(), &lserror))
             PMLOG_ERROR(CONST_MODULE_MCS,"%s LSSubscriptionReply failed", __FUNCTION__);
         }
       }
@@ -304,15 +305,15 @@ bool MediaControlService::onBTAvrcpKeyEventsCb(LSHandle *lshandle, LSMessage *me
 bool MediaControlService::registerMediaSession(LSMessage& message) {
   PMLOG_INFO(CONST_MODULE_MCS, "%s IN", __FUNCTION__);
 
-  LSMessageJsonParser msg(&message,STRICT_SCHEMA(PROPS_2(OBJECT(params, OBJSCHEMA_2( \
-  REQUIRED(appId, string),REQUIRED(mediaId, string))),REQUIRED(subscribe, boolean))));
+  LSMessageJsonParser msg(&message,SCHEMA_3(REQUIRED(mediaId, string),REQUIRED( \
+  appId, string),REQUIRED(subscribe, boolean)));
 
   LS::Message request(&message);
   bool returnValue = false;
   bool subscribed = false;
   int errorCode = MCS_ERROR_NO_ERROR;
   std::string errorText;
-  pbnjson::JValue responseObj = pbnjson::Object();
+  pbnjson::JObject responseObj;
   if (!msg.parse(__FUNCTION__)) {
     PMLOG_ERROR(CONST_MODULE_MCS, "%s Parsing failed", __FUNCTION__);
     errorCode = MCS_ERROR_PARSING_FAILED;
@@ -326,10 +327,9 @@ bool MediaControlService::registerMediaSession(LSMessage& message) {
   }
 
   pbnjson::JValue payload = msg.get();
-  pbnjson::JValue params = payload["params"];
-  std::string mediaId = params["mediaId"].asString();
-  std::string appId = params["appId"].asString();
   subscribed = payload["subscribe"].asBool();
+  std::string mediaId = payload["mediaId"].asString();
+  std::string appId = payload["appId"].asString();
   PMLOG_INFO(CONST_MODULE_MCS, "%s mediaId : %s appId : %s subscribed : %d",
                                 __FUNCTION__, mediaId.c_str(), appId.c_str(), subscribed);
 
@@ -346,18 +346,21 @@ bool MediaControlService::registerMediaSession(LSMessage& message) {
 
   PMLOG_INFO(CONST_MODULE_MCS, "%s Subscribed successfully, add Media Session", __FUNCTION__);
   if(ptrMediaSessionMgr_) {
-    ptrMediaSessionMgr_->addMediaSession(mediaId, appId);
-    returnValue = true;
+    errorCode = ptrMediaSessionMgr_->addMediaSession(mediaId, appId);
+    if(MCS_ERROR_NO_ERROR == errorCode)
+      returnValue = true;
   }
 
   reply:
   responseObj.put("subscribed", subscribed);
   responseObj.put("returnValue", returnValue);
   if(!returnValue) {
+    errorText = getErrorTextFromErrorCode(errorCode);
     responseObj.put("errorCode", errorCode);
     responseObj.put("errorText", errorText);
   }
 
+  PMLOG_INFO(CONST_MODULE_MCS, "%s response : %s", __FUNCTION__, responseObj.stringify().c_str());
   request.respond(responseObj.stringify().c_str());
 
   return true;
@@ -385,16 +388,17 @@ bool MediaControlService::unregisterMediaSession(LSMessage& message) {
   msg.get("mediaId", mediaId);
   PMLOG_INFO(CONST_MODULE_MCS, "%s mediaId : %s", __FUNCTION__, mediaId.c_str());
 
-  bool returnValue = false;
   if(ptrMediaSessionMgr_)
-    if(ptrMediaSessionMgr_->removeMediaSession(mediaId))
-      returnValue = true;
+    errorCode = ptrMediaSessionMgr_->removeMediaSession(mediaId);
 
-  if(returnValue)
-    response = createJsonReplyString(returnValue);
-  else
-    response = createJsonReplyString(returnValue, MCS_ERROR_INVALID_MEDIAID, CSTR_INVALID_MEDIAID);
+  if(MCS_ERROR_NO_ERROR == errorCode)
+    response = createJsonReplyString(true);
+  else {
+    errorText = getErrorTextFromErrorCode(errorCode);
+    response = createJsonReplyString(false, errorCode, errorText);
+  }
 
+  PMLOG_INFO(CONST_MODULE_MCS, "%s response : %s", __FUNCTION__, response.c_str());
   request.respond(response.c_str());
 
   return true;
@@ -422,16 +426,17 @@ bool MediaControlService::activateMediaSession(LSMessage& message) {
   msg.get("mediaId", mediaId);
   PMLOG_INFO(CONST_MODULE_MCS, "%s mediaId : %s", __FUNCTION__, mediaId.c_str());
 
-  bool returnValue = false;
   if(ptrMediaSessionMgr_)
-    if(ptrMediaSessionMgr_->activateMediaSession(mediaId))
-      returnValue = true;
+    errorCode = ptrMediaSessionMgr_->activateMediaSession(mediaId);
 
-  if(returnValue)
-    response = createJsonReplyString(returnValue);
-  else
-    response = createJsonReplyString(returnValue, MCS_ERROR_INVALID_MEDIAID, CSTR_INVALID_MEDIAID);
- 
+  if(MCS_ERROR_NO_ERROR == errorCode)
+    response = createJsonReplyString(true);
+  else {
+    errorText = getErrorTextFromErrorCode(errorCode);
+    response = createJsonReplyString(false, errorCode, errorText);
+  }
+
+  PMLOG_INFO(CONST_MODULE_MCS, "%s response : %s", __FUNCTION__, response.c_str());
   request.respond(response.c_str());
 
   return true;
@@ -459,58 +464,402 @@ bool MediaControlService::deactivateMediaSession(LSMessage& message) {
   msg.get("mediaId", mediaId);
   PMLOG_INFO(CONST_MODULE_MCS, "%s mediaId : %s", __FUNCTION__, mediaId.c_str());
 
-  bool returnValue = false;
   if(ptrMediaSessionMgr_)
-    if(ptrMediaSessionMgr_->deactivateMediaSession(mediaId))
-      returnValue = true;
+    errorCode = ptrMediaSessionMgr_->deactivateMediaSession(mediaId);
 
-  if(returnValue)
-    response = createJsonReplyString(returnValue);
-  else
-    response = createJsonReplyString(returnValue, MCS_ERROR_INVALID_MEDIAID, CSTR_INVALID_MEDIAID);
+  if(MCS_ERROR_NO_ERROR == errorCode)
+    response = createJsonReplyString(true);
+  else {
+    errorText = getErrorTextFromErrorCode(errorCode);
+    response = createJsonReplyString(false, errorCode, errorText);
+  }
 
+  PMLOG_INFO(CONST_MODULE_MCS, "%s response : %s", __FUNCTION__, response.c_str());
   request.respond(response.c_str());
 
   return true;
 }
 
 bool MediaControlService::getMediaMetaData(LSMessage& message) {
+  PMLOG_INFO(CONST_MODULE_MCS, "%s IN", __FUNCTION__);
+
+  LSMessageJsonParser msg(&message,SCHEMA_1(REQUIRED(mediaId, string)));
+
   LS::Message request(&message);
-  pbnjson::JValue responseObj = pbnjson::Object();
-  responseObj.put("returnValue", true);
-  request.respond(responseObj.stringify().c_str());
+  int errorCode = MCS_ERROR_NO_ERROR;
+  std::string errorText;
+  std::string response;
+  if (!msg.parse(__FUNCTION__)) {
+    PMLOG_ERROR(CONST_MODULE_MCS, "%s Parsing failed", __FUNCTION__);
+    errorCode = MCS_ERROR_PARSING_FAILED;
+    errorText = CSTR_PARSING_ERROR;
+    response = createJsonReplyString(false, errorCode, errorText);
+    request.respond(response.c_str());
+    return true;
+  }
+
+  std::string mediaId;
+  msg.get("mediaId", mediaId);
+  PMLOG_INFO(CONST_MODULE_MCS, "%s mediaId : %s", __FUNCTION__, mediaId.c_str());
+
+  mediaMetaData objMetaData;
+  if(ptrMediaSessionMgr_)
+    errorCode = ptrMediaSessionMgr_->getMediaMetaData(mediaId, objMetaData);
+
+  if(MCS_ERROR_NO_ERROR == errorCode) {
+    pbnjson::JObject metaDataObj;
+    metaDataObj.put("title", objMetaData.getTitle());
+    metaDataObj.put("artist", objMetaData.getArtist());
+    metaDataObj.put("totalDuration", objMetaData.getDuration());
+    metaDataObj.put("album", objMetaData.getAlbum());
+    metaDataObj.put("genre", objMetaData.getGenre());
+    metaDataObj.put("trackNumber", objMetaData.getTrackNumber());
+    metaDataObj.put("volume", objMetaData.getVolume());
+
+    pbnjson::JObject responseObj;
+    responseObj.put("returnValue", true);
+    responseObj.put("metaData", metaDataObj);
+    response = responseObj.stringify();
+  }
+  else {
+    errorText = getErrorTextFromErrorCode(errorCode);
+    response = createJsonReplyString(false, errorCode, errorText);
+  }
+
+  PMLOG_INFO(CONST_MODULE_MCS, "%s response : %s", __FUNCTION__, response.c_str());
+  request.respond(response.c_str());
+
   return true;
 }
 
 bool MediaControlService::getMediaPlayStatus(LSMessage& message) {
+  PMLOG_INFO(CONST_MODULE_MCS, "%s IN", __FUNCTION__);
+
+  LSMessageJsonParser msg(&message,SCHEMA_1(REQUIRED(mediaId, string)));
+
   LS::Message request(&message);
-  pbnjson::JValue responseObj = pbnjson::Object();
-  responseObj.put("returnValue", true);
-  request.respond(responseObj.stringify().c_str());
+  int errorCode = MCS_ERROR_NO_ERROR;
+  std::string errorText;
+  std::string response;
+  if (!msg.parse(__FUNCTION__)) {
+    PMLOG_ERROR(CONST_MODULE_MCS, "%s Parsing failed", __FUNCTION__);
+    errorCode = MCS_ERROR_PARSING_FAILED;
+    errorText = CSTR_PARSING_ERROR;
+    response = createJsonReplyString(false, errorCode, errorText);
+    request.respond(response.c_str());
+    return true;
+  }
+
+  std::string mediaId;
+  msg.get("mediaId", mediaId);
+  PMLOG_INFO(CONST_MODULE_MCS, "%s mediaId : %s", __FUNCTION__, mediaId.c_str());
+
+  std::string playStatus;
+  if(ptrMediaSessionMgr_)
+    errorCode = ptrMediaSessionMgr_->getMediaPlayStatus(mediaId, playStatus);
+
+  if(MCS_ERROR_NO_ERROR == errorCode) {
+    pbnjson::JObject responseObj;
+    responseObj.put("returnValue", true);
+    responseObj.put("playStatus", playStatus);
+    response = responseObj.stringify();
+  }
+  else {
+    errorText = getErrorTextFromErrorCode(errorCode);
+    response = createJsonReplyString(false, MCS_ERROR_INVALID_MEDIAID, CSTR_INVALID_MEDIAID);
+  }
+
+  PMLOG_INFO(CONST_MODULE_MCS, "%s response : %s", __FUNCTION__, response.c_str());
+  request.respond(response.c_str());
+
   return true;
 }
 
 bool MediaControlService::getMediaSessionInfo(LSMessage& message) {
+  PMLOG_INFO(CONST_MODULE_MCS, "%s IN", __FUNCTION__);
+
+  LSMessageJsonParser msg(&message,SCHEMA_1(REQUIRED(mediaId, string)));
+
   LS::Message request(&message);
-  pbnjson::JValue responseObj = pbnjson::Object();
-  responseObj.put("returnValue", true);
-  request.respond(responseObj.stringify().c_str());
+  int errorCode = MCS_ERROR_NO_ERROR;
+  std::string errorText;
+  std::string response;
+  if (!msg.parse(__FUNCTION__)) {
+    PMLOG_ERROR(CONST_MODULE_MCS, "%s Parsing failed", __FUNCTION__);
+    errorCode = MCS_ERROR_PARSING_FAILED;
+    errorText = CSTR_PARSING_ERROR;
+    response = createJsonReplyString(false, errorCode, errorText);
+    request.respond(response.c_str());
+    return true;
+  }
+
+  std::string mediaId;
+  msg.get("mediaId", mediaId);
+  PMLOG_INFO(CONST_MODULE_MCS, "%s mediaId : %s", __FUNCTION__, mediaId.c_str());
+
+  mediaSession objMediaSession;
+  if(ptrMediaSessionMgr_)
+    errorCode = ptrMediaSessionMgr_->getMediaSessionInfo(mediaId, objMediaSession);
+
+  if(MCS_ERROR_NO_ERROR == errorCode) {
+    mediaMetaData objMetaData = objMediaSession.getMediaMetaDataObj();
+    pbnjson::JObject metaDataObj;
+    metaDataObj.put("title", objMetaData.getTitle());
+    metaDataObj.put("artist", objMetaData.getArtist());
+    metaDataObj.put("totalDuration", objMetaData.getDuration());
+    metaDataObj.put("album", objMetaData.getAlbum());
+    metaDataObj.put("genre", objMetaData.getGenre());
+    metaDataObj.put("trackNumber", objMetaData.getTrackNumber());
+    metaDataObj.put("volume", objMetaData.getVolume());
+
+    pbnjson::JObject sessionInfoObj;
+    sessionInfoObj.put("mediaId", objMediaSession.getMediaId());
+    sessionInfoObj.put("appId", objMediaSession.getAppId());
+    sessionInfoObj.put("metaData", metaDataObj);
+
+    pbnjson::JObject responseObj;
+    responseObj.put("returnValue", true);
+    responseObj.put("sessionInfo", sessionInfoObj);
+    response = responseObj.stringify();
+  }
+  else {
+    errorText = getErrorTextFromErrorCode(errorCode);
+    response = createJsonReplyString(false, errorCode, errorText);
+  }
+
+  PMLOG_INFO(CONST_MODULE_MCS, "%s response : %s", __FUNCTION__, response.c_str());
+  request.respond(response.c_str());
   return true;
 }
 
 bool MediaControlService::getMediaSessionId(LSMessage& message) {
+  PMLOG_INFO(CONST_MODULE_MCS, "%s IN", __FUNCTION__);
+
+  LSMessageJsonParser msg(&message,SCHEMA_1(REQUIRED(appId, string)));
+
   LS::Message request(&message);
-  pbnjson::JValue responseObj = pbnjson::Object();
-  responseObj.put("returnValue", true);
-  request.respond(responseObj.stringify().c_str());
+  int errorCode = MCS_ERROR_NO_ERROR;
+  std::string errorText;
+  std::string response;
+  if (!msg.parse(__FUNCTION__)) {
+    PMLOG_ERROR(CONST_MODULE_MCS, "%s Parsing failed", __FUNCTION__);
+    errorCode = MCS_ERROR_PARSING_FAILED;
+    errorText = CSTR_PARSING_ERROR;
+    response = createJsonReplyString(false, errorCode, errorText);
+    request.respond(response.c_str());
+    return true;
+  }
+
+  std::string appId;
+  msg.get("appId", appId);
+  PMLOG_INFO(CONST_MODULE_MCS, "%s appId : %s", __FUNCTION__, appId.c_str());
+  //get media list from MSM
+  std::vector<std::string> strMediaSessionIdList;
+  if(ptrMediaSessionMgr_)
+    strMediaSessionIdList = ptrMediaSessionMgr_->getMediaSessionList(appId);
+
+  bool returnValue = false;
+  if(strMediaSessionIdList.size())
+    returnValue = true;
+
+  if(returnValue) {
+    pbnjson::JArray mediaSessionIdArray;
+    for(const auto& itr : strMediaSessionIdList)
+      mediaSessionIdArray.append(itr);
+
+    pbnjson::JObject responseObj;
+    responseObj.put("returnValue", returnValue);
+    responseObj.put("mediaId", mediaSessionIdArray);
+    response = responseObj.stringify();
+  }
+  else
+    response = createJsonReplyString(returnValue, MCS_ERROR_INVALID_APPID, CSTR_INVALID_APPID);
+
+  PMLOG_INFO(CONST_MODULE_MCS, "%s response : %s", __FUNCTION__, response.c_str());
+  request.respond(response.c_str());
+
   return true;
 }
 
 bool MediaControlService::getActiveMediaSessions(LSMessage& message) {
+  PMLOG_INFO(CONST_MODULE_MCS, "%s IN", __FUNCTION__);
+
+  LSMessageJsonParser msg(&message,SCHEMA_0);
+
   LS::Message request(&message);
+  int errorCode = MCS_ERROR_NO_ERROR;
+  std::string errorText;
+  std::string response;
+  if (!msg.parse(__FUNCTION__)) {
+    PMLOG_ERROR(CONST_MODULE_MCS, "%s Parsing failed", __FUNCTION__);
+    errorCode = MCS_ERROR_PARSING_FAILED;
+    errorText = CSTR_PARSING_ERROR;
+    response = createJsonReplyString(false, errorCode, errorText);
+    request.respond(response.c_str());
+    return true;
+  }
+  //get active sessions list from MSM
+  std::vector<std::string> strActiveMediaSessionList;
+  if(ptrMediaSessionMgr_)
+    strActiveMediaSessionList = ptrMediaSessionMgr_->getActiveMediaSessionList();
+
+  bool returnValue = false;
+  if(strActiveMediaSessionList.size())
+    returnValue = true;
+
+  if(returnValue) {
+    pbnjson::JArray activeMediaSessionArray;
+    for(const auto& itr : strActiveMediaSessionList)
+      activeMediaSessionArray.append(itr);
+
+    pbnjson::JObject responseObj;
+    responseObj.put("returnValue", returnValue);
+    responseObj.put("sessionList", activeMediaSessionArray);
+    response = responseObj.stringify();
+  }
+  else
+    response = createJsonReplyString(returnValue, MCS_ERROR_NO_ACTIVE_SESSION, CSTR_NO_ACTIVE_SESSION);
+
+  PMLOG_INFO(CONST_MODULE_MCS, "%s response : %s", __FUNCTION__, response.c_str());
+  request.respond(response.c_str());
+
+  return true;
+}
+
+bool MediaControlService::setMediaMetaData(LSMessage& message) {
+  PMLOG_INFO(CONST_MODULE_MCS, "%s IN", __FUNCTION__);
+
+  LSMessageJsonParser msg(&message,STRICT_SCHEMA(PROPS_2(OBJECT(mediaMetaData, OBJSCHEMA_7( \
+  OPTIONAL(title, string),OPTIONAL(artist, string),OPTIONAL(totalDuration, string),OPTIONAL( \
+  album, string),OPTIONAL(genre, string),OPTIONAL(trackNumber, integer),OPTIONAL(volume, integer) \
+	)),REQUIRED(mediaId, string))));
+
+  LS::Message request(&message);
+  int errorCode = MCS_ERROR_NO_ERROR;
+  std::string errorText;
+	std::string response;
+  if (!msg.parse(__FUNCTION__)) {
+    PMLOG_ERROR(CONST_MODULE_MCS, "%s Parsing failed", __FUNCTION__);
+    errorCode = MCS_ERROR_PARSING_FAILED;
+    errorText = CSTR_PARSING_ERROR;
+    response = createJsonReplyString(false, errorCode, errorText);
+    request.respond(response.c_str());
+    return true;
+  }
+
+  pbnjson::JValue payload = msg.get();
+  std::string mediaId = payload["mediaId"].asString();
+  //extract mediaMetaData info
+  pbnjson::JValue metaData = payload["mediaMetaData"];
+  std::string title = metaData["title"].asString();
+  std::string artist = metaData["artist"].asString();
+  std::string duration = metaData["totalDuration"].asString();
+  std::string album = metaData["album"].asString();
+  std::string genre = metaData["genre"].asString();
+  int trackNumber =  metaData["trackNumber"].asNumber<int>();
+  int volume = metaData["volume"].asNumber<int>();
+  PMLOG_INFO(CONST_MODULE_MCS, "%s mediaId : %s title : %s artist : %s duration : %s album : %s \
+                                genre : %s trackNumber : %d volume : %d", __FUNCTION__, mediaId.c_str(),
+                                title.c_str(), artist.c_str(), duration.c_str(), album.c_str(), genre.c_str(),
+                                trackNumber, volume);
+
+  mediaMetaData objMetaData(title, artist, duration, album, genre, trackNumber, volume);
+
+  if(ptrMediaSessionMgr_)
+    errorCode = ptrMediaSessionMgr_->setMediaMetaData(mediaId, objMetaData);
+
+  if(MCS_ERROR_NO_ERROR == errorCode)
+    response = createJsonReplyString(true);
+  else {
+    errorText = getErrorTextFromErrorCode(errorCode);
+    response = createJsonReplyString(false, errorCode, errorText);
+  }
+
+  PMLOG_INFO(CONST_MODULE_MCS, "%s response : %s", __FUNCTION__, response.c_str());
+  request.respond(response.c_str());
+
+  return true;
+}
+
+bool MediaControlService::setMediaPlayStatus(LSMessage& message) {
+  PMLOG_INFO(CONST_MODULE_MCS, "%s IN", __FUNCTION__);
+
+  LSMessageJsonParser msg(&message,SCHEMA_2(REQUIRED(mediaId, string),REQUIRED(playStatus, string)));
+
+  LS::Message request(&message);
+  int errorCode = MCS_ERROR_NO_ERROR;
+  std::string errorText;
+  std::string response;
+  if (!msg.parse(__FUNCTION__)) {
+    PMLOG_ERROR(CONST_MODULE_MCS, "%s Parsing failed", __FUNCTION__);
+    errorCode = MCS_ERROR_PARSING_FAILED;
+    errorText = CSTR_PARSING_ERROR;
+    response = createJsonReplyString(false, errorCode, errorText);
+    request.respond(response.c_str());
+    return true;
+  }
+
+  pbnjson::JValue payload = msg.get();
+  std::string mediaId = payload["mediaId"].asString();
+  std::string playStatus = payload["playStatus"].asString();
+  //set playstatus in MSM
+  if(ptrMediaSessionMgr_)
+    errorCode = ptrMediaSessionMgr_->setMediaPlayStatus(mediaId, playStatus);
+
+  if(MCS_ERROR_NO_ERROR == errorCode)
+    response = createJsonReplyString(true);
+  else {
+    errorText = getErrorTextFromErrorCode(errorCode);
+    response = createJsonReplyString(false, errorCode, errorText);
+  }
+
+  PMLOG_INFO(CONST_MODULE_MCS, "%s response : %s", __FUNCTION__, response.c_str());
+  request.respond(response.c_str());
+
+  return true;
+}
+
+bool MediaControlService::testKeyEvent(LSMessage &message) {
+  PMLOG_INFO(CONST_MODULE_MCS, "%s IN", __FUNCTION__);
+
+  LSMessageJsonParser msg(&message,
+      SCHEMA_2(REQUIRED(mediaId, string),REQUIRED(keyEvent, string)));
+
+  LS::Message request(&message);
+  int errorCode = MCS_ERROR_NO_ERROR;
+  std::string errorText;
+  std::string response;
+  if (!msg.parse(__FUNCTION__)) {
+    PMLOG_ERROR(CONST_MODULE_MCS, "%s Parsing failed", __FUNCTION__);
+    errorCode = MCS_ERROR_PARSING_FAILED;
+    errorText = CSTR_PARSING_ERROR;
+    response = createJsonReplyString(false, errorCode, errorText);
+    request.respond(response.c_str());
+    return true;
+  }
+
+  std::string keyCode;
+  std::string mediaId;
+  msg.get("keyEvent", keyCode);
+  PMLOG_INFO(CONST_MODULE_MCS, "%s keyEvent : %s", __FUNCTION__, keyCode.c_str());
+  msg.get("mediaId", mediaId);
+  PMLOG_INFO(CONST_MODULE_MCS, "%s mediaId : %s", __FUNCTION__, mediaId.c_str());
+
   pbnjson::JValue responseObj = pbnjson::Object();
+
+  responseObj.put("keyEvent", keyCode);
+  responseObj.put("mediaId", mediaId);
   responseObj.put("returnValue", true);
-  request.respond(responseObj.stringify().c_str());
+  responseObj.put("subscribed", true);
+  PMLOG_INFO(CONST_MODULE_MCS, "%s send subscription response :%s", __FUNCTION__, responseObj.stringify().c_str());
+  CLSError lserror;
+  if (!LSSubscriptionReply(lsHandle_, "registerMediaSession",
+      responseObj.stringify().c_str(), &lserror))
+    PMLOG_ERROR(CONST_MODULE_MCS,"%s LSSubscriptionReply failed", __FUNCTION__);
+
+  pbnjson::JValue responseObj1 = pbnjson::Object();
+  responseObj1.put("returnValue", true);
+  request.respond(responseObj1.stringify().c_str());
   return true;
 }
 

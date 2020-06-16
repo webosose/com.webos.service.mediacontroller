@@ -49,6 +49,9 @@ public:
   bool getMediaSessionInfo(LSMessage &);
   bool getMediaSessionId(LSMessage &);
   bool getActiveMediaSessions(LSMessage &);
+  bool setMediaMetaData(LSMessage &);
+  bool setMediaPlayStatus(LSMessage &);
+  bool testKeyEvent(LSMessage &);
   static bool onBTAdapterQueryCb(LSHandle *lshandle, LSMessage *message, void *ctx);
   static bool onBTDeviceGetStatusCb(LSHandle *lshandle, LSMessage *message, void *ctx);
   static bool onBTAvrcpGetStatusCb(LSHandle *lshandle, LSMessage *message, void *ctx);

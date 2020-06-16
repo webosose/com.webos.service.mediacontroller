@@ -21,6 +21,7 @@
     (File Inclusions)
 ------------------------------------------------------------------------------*/
 #include <map>
+#include <vector>
 #include "MediaControlTypes.h"
 #include "RequestReceiver.h"
 
@@ -33,12 +34,25 @@ private:
 
 public:
   static MediaSessionManager &getInstance();
-  void addMediaSession (const std::string& mediaId, const std::string& appId);
-  bool activateMediaSession (const std::string& mediaId);
-  bool deactivateMediaSession (const std::string& mediaId);
-  bool removeMediaSession (const std::string& mediaId);
-  //todo : add session related API's in nxc ccc
-  std::string getActiveSessionbyDisplayId (const int& displayId);
+  int addMediaSession (const std::string& mediaId,
+                        const std::string& appId);
+  int activateMediaSession (const std::string& mediaId);
+  int deactivateMediaSession (const std::string& mediaId);
+  int removeMediaSession (const std::string& mediaId);
+  int getMediaMetaData(const std::string& mediaId,
+                       mediaMetaData& objMetaData);
+  int getMediaSessionInfo(const std::string& mediaId,
+                          mediaSession& objMediaSession);
+  int getMediaPlayStatus(const std::string& mediaId,
+                         std::string& playStatus);
+  int setMediaMetaData(const std::string& mediaId,
+                       const mediaMetaData& objMetaData);
+  int setMediaPlayStatus(const std::string& mediaId,
+                         const std::string& playStatus);
+  std::vector<std::string> getMediaSessionList(const std::string& appId);
+  std::vector<std::string> getActiveMediaSessionList();
+  std::string getCurrentActiveSession();
+  bool validatePlayStatus(const std::string& playStatus);
 };
 
 #endif /*MEDIA_SESSION_MANAGER_H_*/

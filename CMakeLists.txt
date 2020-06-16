@@ -70,5 +70,15 @@ target_link_libraries(${PROJECT_NAME}
                       ${LS2++_LDFLAGS}
                       ${PMLOGLIB_LDFLAGS})
 
+#MediaControllerServiceTest project exe
+set (SRC_TEST ${CMAKE_SOURCE_DIR}/test/MediaControllerServiceTest.cpp)
+add_executable (MCSTestApp ${SRC_TEST})
+install(TARGETS MCSTestApp DESTINATION ${WEBOS_INSTALL_SBINDIR})
+
+#mediacontrollerkeyevent project exe
+set (SRC_KEY_TEST ${CMAKE_SOURCE_DIR}/test/MediaControllerKeyEventTest.cpp)
+add_executable (MCSKeyEventTestApp ${SRC_KEY_TEST})
+install(TARGETS MCSKeyEventTestApp DESTINATION ${WEBOS_INSTALL_SBINDIR})
+
 install(TARGETS ${PROJECT_NAME} DESTINATION ${WEBOS_INSTALL_SBINDIR})
 webos_build_system_bus_files()
