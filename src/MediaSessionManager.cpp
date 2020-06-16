@@ -60,6 +60,7 @@ int MediaSessionManager::deactivateMediaSession (const std::string& mediaId) {
   if(itr != mapMediaSessionInfo_.end()) {
     //delete media client from receiver stack
     objRequestRcvr_.removeClient(mediaId);
+    return MCS_ERROR_NO_ERROR;
   }
   PMLOG_ERROR(CONST_MODULE_MSM, "%s MediaId doesnt exists", __FUNCTION__);
   return MCS_ERROR_INVALID_MEDIAID;
