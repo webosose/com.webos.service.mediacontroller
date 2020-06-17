@@ -29,8 +29,6 @@ const std::string CSTR_PARSING_ERROR = "Parsing Error";
 const std::string CSTR_INVALID_APPID = "Invalid appId";
 const std::string CSTR_NO_ACTIVE_SESSION = "No session is active";
 const std::string CSTR_SESSION_ALREADY_REGISTERED = "Media session already registered";
-const std::string CSTR_SESSION_ALREADY_ACTIVE = "Media session already active";
-const std::string CSTR_SESSION_ALREADY_DEACTIVE = "Media session already deactivated";
 const std::string CSTR_SESSION_INVALID_PLAY_STATE = "Invalid Play State";
 const std::string CSTR_EMPTY = "";
 
@@ -53,8 +51,6 @@ enum MCSErrorCode {
   MCS_ERROR_INVALID_APPID,
   MCS_ERROR_NO_ACTIVE_SESSION,
   MCS_ERROR_SESSION_ALREADY_REGISTERED,
-  MCS_ERROR_SESSION_ALREADY_ACTIVE,
-  MCS_ERROR_SESSION_ALREADY_DEACTIVE,
   MCS_ERROR_SESSION_INVALID_PLAY_STATE,
   MCS_ERROR_NO_ERROR
 };
@@ -68,17 +64,6 @@ enum MediaPlayState {
   PLAY_STATE_REWINDING,
   PLAY_STATE_BUFFERING,
   PLAY_STATE_ERROR
-};
-
-struct requestReceiver {
-  std::string mediaId_;
-  int priority_;
-  requestReceiver() :
-    mediaId_(CSTR_EMPTY),
-    priority_(RESET) {}
-  requestReceiver(const std::string& mediaId, const int& priority = RESET) :
-    mediaId_(mediaId),
-    priority_(priority) {}
 };
 
 class mediaMetaData {
@@ -214,10 +199,6 @@ static std::string getErrorTextFromErrorCode(const int& errorCode) {
       return CSTR_NO_ACTIVE_SESSION;
     case MCS_ERROR_SESSION_ALREADY_REGISTERED:
       return CSTR_SESSION_ALREADY_REGISTERED;
-    case MCS_ERROR_SESSION_ALREADY_ACTIVE:
-      return CSTR_SESSION_ALREADY_ACTIVE;
-    case MCS_ERROR_SESSION_ALREADY_DEACTIVE:
-      return CSTR_SESSION_ALREADY_DEACTIVE;
     case MCS_ERROR_SESSION_INVALID_PLAY_STATE:
       return CSTR_SESSION_INVALID_PLAY_STATE;
     default:

@@ -26,27 +26,25 @@
 #include <pbnjson.hpp>
 #include <luna-service2/lunaservice.hpp>
 
-#define STANDARD_JSON_SUCCESS "{\"returnValue\":true}"
 #define SYSTEM_PARAMETERS "\"$activity\":{\"type\":\"object\",\"optional\":true}"
 
 // Build a schema as a const char * string without any execution overhead
 #define SCHEMA_ANY "{}"
 #define SCHEMA_0 "{\"type\":\"object\",\"properties\":{" SYSTEM_PARAMETERS "},\"additionalProperties\":false}"
-#define SCHEMA_1(param) "{\"type\":\"object\",\"properties\":{" param "," SYSTEM_PARAMETERS "},\"additionalProperties\":false}"
 #define SCHEMA_2(p1, p2) "{\"type\":\"object\",\"properties\":{" p1 "," p2 "," SYSTEM_PARAMETERS "},\"additionalProperties\":false}"
-#define SCHEMA_3(p1, p2, p3) "{\"type\":\"object\",\"properties\":{" p1 "," p2 "," p3 "," SYSTEM_PARAMETERS "},\"additionalProperties\":false}"
-#define SCHEMA_4(p1, p2, p3, p4) "{\"type\":\"object\",\"properties\":{" p1 "," p2 "," p3 "," p4 "," SYSTEM_PARAMETERS "},\"additionalProperties\":false}"
 #define SCHEMA_5(p1, p2, p3, p4, p5) "{\"type\":\"object\",\"properties\":{" p1 "," p2 "," p3 "," p4 "," p5 "," SYSTEM_PARAMETERS "},\"additionalProperties\":false}"
 #define SCHEMA_6(p1, p2, p3, p4, p5, p6) "{\"type\":\"object\",\"properties\":{" p1 "," p2 "," p3 "," p4 "," p5 "," p6 "," SYSTEM_PARAMETERS "},\"additionalProperties\":false}"
-#define SCHEMA_7(p1, p2, p3, p4, p5, p6, p7) "{\"type\":\"object\",\"properties\":{" p1 "," p2 "," p3 "," p4 "," p5 "," p6 "," p7 "," SYSTEM_PARAMETERS "},\"additionalProperties\":false}"
 #define SCHEMA_8(p1, p2, p3, p4, p5, p6, p7, p8) "{\"type\":\"object\",\"properties\":{" p1 "," p2 "," p3 "," p4 "," p5 "," p6 "," p7 "," p8 "," SYSTEM_PARAMETERS "},\"additionalProperties\":false}"
 #define SCHEMA_9(p1, p2, p3, p4, p5, p6, p7, p8, p9) "{\"type\":\"object\",\"properties\":{" p1 "," p2 "," p3 "," p4 "," p5 "," p6 "," p7 "," p8 "," p9 "," SYSTEM_PARAMETERS "},\"additionalProperties\":false}"
 #define OBJECT(name, objschema) "\"" #name "\":" objschema
-#define OBJSCHEMA_4(p1, p2, p3, p4) "{\"type\":\"object\",\"properties\":{" p1 "," p2 "," p3 "," p4 "}}"
 #define OBJSCHEMA_7(p1, p2, p3, p4, p5, p6, p7) "{\"type\":\"object\",\"properties\":{" p1 "," p2 "," p3 "," p4 "," p5 "," p6 "," p7 "}}"
+#define PROPS_1(p1) ",\"properties\":{" p1 "}"
 #define PROPS_2(p1, p2) ",\"properties\":{" p1 "," p2 "}"
+#define PROPS_3(p1, p2, p3) ",\"properties\":{" p1 "," p2 "," p3 "}"
 #define STRICT_SCHEMA(attributes) "{\"type\":\"object\"" attributes ",\"additionalProperties\":false}"
+#define REQUIRED_1(p1) ",\"required\":[\"" #p1 "\"]"
 #define REQUIRED_2(p1, p2) ",\"required\":[\"" #p1 "\",\"" #p2 "\"]"
+#define REQUIRED_3(p1, p2, p3) ",\"required\":[\"" #p1 "\",\"" #p2 "\",\"" #p3 "\"]"
 
 // Macros to use in place of the parameters in the SCHEMA_xxx macros above
 #define REQUIRED(name, type) "\"" #name "\":{\"type\":\"" #type "\"}"
@@ -67,15 +65,6 @@ struct CLSError : public LSError
   }
 };
 
-// LSMessageJson::parse can log the message received, or not, with more or less parameters...
-enum ELogOption
-{
-  eLogOption_DontLogMessage = 0,
-  eLogOption_LogMessage,
-  eLogOption_LogMessageWithCategory,
-  eLogOption_LogMessageWithMethod
-};
-
 class LSMessageJsonParser
 {
 public:
@@ -85,7 +74,7 @@ public:
   //Parse the message using the schema passed in constructor
   //If 'sender' is specified, automatically reply in case of bad syntax using standard format
   //Option to log the text of the message by default
-  bool parse(const char *func, LSHandle *sender = 0, ELogOption logOption = eLogOption_LogMessage);
+  bool parse(const char *func, LSHandle *sender = 0);
   pbnjson::JValue get() { return mParser_.getDom(); }
   const char * getPayload() { return LSMessageGetPayload(mMessage_); }
 

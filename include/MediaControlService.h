@@ -52,6 +52,7 @@ public:
   bool setMediaMetaData(LSMessage &);
   bool setMediaPlayStatus(LSMessage &);
   bool testKeyEvent(LSMessage &);
+  static bool onBTServerStatusCb(LSHandle *lshandle, LSMessage *message, void *ctx);
   static bool onBTAdapterQueryCb(LSHandle *lshandle, LSMessage *message, void *ctx);
   static bool onBTDeviceGetStatusCb(LSHandle *lshandle, LSMessage *message, void *ctx);
   static bool onBTAvrcpGetStatusCb(LSHandle *lshandle, LSMessage *message, void *ctx);
