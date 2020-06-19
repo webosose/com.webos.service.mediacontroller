@@ -41,7 +41,7 @@ pkg_check_modules(PBNJSON_CPP REQUIRED pbnjson_cpp)
 include_directories(${PBNJSON_CPP_INCLUDE_DIRS})
 webos_add_compiler_flags(ALL ${PBNJSON_CPP_CFLAGS})
 
-if(WEBOS_TARGET_MACHINE STREQUAL "raspberrypi4")
+if(WEBOS_TARGET_MACHINE STREQUAL "raspberrypi4" OR WEBOS_TARGET_MACHINE STREQUAL "raspberrypi4-64" OR WEBOS_TARGET_MACHINE STREQUAL "qemux86")
 add_definitions(-DPLATFORM_RASPBERRYPI4)
 endif()
 
