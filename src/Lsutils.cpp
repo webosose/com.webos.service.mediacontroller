@@ -26,48 +26,29 @@ LSMessageJsonParser::LSMessageJsonParser(LSMessage * message,
 }
 
 bool LSMessageJsonParser::parse(const char * callerFunction,
-                                LSHandle * lssender,
-                                ELogOption logOption) {
+                                LSHandle * lssender) {
   const char * payload = getPayload();
-  const char * context = 0;
-  if (logOption == eLogOption_LogMessageWithCategory)
-    context = LSMessageGetCategory(mMessage_);
-  else if (logOption == eLogOption_LogMessageWithMethod)
-    context = LSMessageGetMethod(mMessage_);
-  if (context == 0)
-    context = "";
-
-  if (logOption != eLogOption_DontLogMessage)
-    PMLOG_ERROR(CONST_MODULE_MCS, "%s %s: got '%s'", callerFunction, context, payload);
   if (!mParser_.parse(payload, mSchema_)) {
-    const char *    sender = LSMessageGetSenderServiceName(mMessage_);
-    if (sender == 0 || *sender == 0)
-      sender = LSMessageGetSender(mMessage_);
-    if (sender == 0)
-      sender = "";
     std::string errorText = "Could not validate json message against schema";
     bool notJson = true;
     if (strcmp(mSchemaText_, SCHEMA_ANY) != 0) {
-      pbnjson::JSchemaFragment    genericSchema(SCHEMA_ANY);
+      pbnjson::JSchemaFragment genericSchema(SCHEMA_ANY);
       notJson = !mParser_.parse(payload, genericSchema);
     }
     if (notJson) {
-      PMLOG_ERROR(CONST_MODULE_MCS, "%s %s: The message '%s' sent by '%s' is not a valid  \
-                json message.", callerFunction, context, payload, sender);
+      PMLOG_ERROR(CONST_MODULE_MCS, "%s : The message '%s' sent is not a valid  \
+                json message.", callerFunction, payload);
       errorText = "Not a valid json message";
     }
     else {
-      PMLOG_ERROR(CONST_MODULE_MCS, "%s %s: Could not validate json message '%s' sent by   \
+      PMLOG_ERROR(CONST_MODULE_MCS, "%s : Could not validate json message '%s' sent \
                  '%s' against schema '%s'.",
-                 callerFunction, context,
-                 payload, sender, mSchemaText_);
+                 callerFunction, payload, mSchemaText_);
      }
-     if (sender) {
-       std::string reply = createJsonReplyString(false, 1, errorText);
-       CLSError lserror;
-       if (!LSMessageReply(lssender, mMessage_, reply.c_str(), &lserror))
-          PMLOG_ERROR(CONST_MODULE_MCS, "%s LSMessageReply failed",callerFunction);
-     }
+     std::string reply = createJsonReplyString(false, 1, errorText);
+     CLSError lserror;
+     if (!LSMessageReply(lssender, mMessage_, reply.c_str(), &lserror))
+        PMLOG_ERROR(CONST_MODULE_MCS, "%s LSMessageReply failed",callerFunction);
      return false;
    }
  return true;

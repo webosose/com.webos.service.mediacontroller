@@ -41,6 +41,14 @@ pkg_check_modules(PBNJSON_CPP REQUIRED pbnjson_cpp)
 include_directories(${PBNJSON_CPP_INCLUDE_DIRS})
 webos_add_compiler_flags(ALL ${PBNJSON_CPP_CFLAGS})
 
+if(WEBOS_TARGET_MACHINE STREQUAL "raspberrypi4")
+add_definitions(-DPLATFORM_RASPBERRYPI4)
+endif()
+
+if(WEBOS_TARGET_MACHINE STREQUAL "sa8155")
+add_definitions(-DPLATFORM_SA8155)
+endif()
+
 webos_add_compiler_flags(ALL -Wall -funwind-tables)
 webos_add_compiler_flags(ALL -Wall -rdynamic)
 

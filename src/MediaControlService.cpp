@@ -57,11 +57,35 @@ MediaControlService::MediaControlService()
   // attach to mainloop and run it
   attachToLoop(main_loop_ptr_.get());
 
-  // get BT to get connected devices
-  subscribeToBTAdapterGetStatus();
+  pbnjson::JValue payload = pbnjson::Object();
+  payload.put("serviceName", "com.webos.service.bluetooth2");
+  // check BT server status
+  LS::Call status = callMultiReply("luna://com.webos.service.bus/signal/registerServerStatus",
+                                   payload.stringify().c_str(),
+                                   &MediaControlService::onBTServerStatusCb, this);
 
   // run the gmainloop
   g_main_loop_run(main_loop_ptr_.get());
+}
+
+bool MediaControlService::onBTServerStatusCb(LSHandle *lshandle, LSMessage *message, void *ctx) {
+  PMLOG_INFO(CONST_MODULE_MCS,"%s IN", __FUNCTION__);
+
+  LS::Message response(message);
+  pbnjson::JValue payload = pbnjson::JDomParser::fromString(response.getPayload());
+  if(payload.isNull())
+    return true;
+
+  bool connected = payload["connected"].asBool();
+  if(connected) {
+    PMLOG_INFO(CONST_MODULE_MCS, "%s BT service running", __FUNCTION__);
+    MediaControlService *ptrService = static_cast<MediaControlService*>(ctx);
+    if(ptrService) {
+      // get BT to get connected devices
+      ptrService->subscribeToBTAdapterGetStatus();
+    }
+  }
+  return true;
 }
 
 void MediaControlService::subscribeToBTAdapterGetStatus() {
@@ -106,7 +130,11 @@ bool MediaControlService::onBTAdapterQueryCb(LSHandle *lshandle, LSMessage *mess
       std::string adapterAddress = adapters[i]["adapterAddress"].asString();
       PMLOG_INFO(CONST_MODULE_MCS,"%s : adapterName : %s, adapterAddress : %s",
                                    __FUNCTION__, adapterName.c_str(), adapterAddress.c_str());
+      #if defined(PLATFORM_RASPBERRYPI4)
+      if(("raspberrypi4 #2" == adapterName) || ("raspberrypi4" == adapterName)) {
+      #elif defined(PLATFORM_SA8155)
       if ("sa8155 Bluetooth hci0" == adapterName) {
+      #endif
         if (defaultAdapterAddress_ != adapterAddress) {
           defaultAdapterAddress_ = adapterAddress;
           std::string payload = "{\"adapterAddress\":\"" + adapterAddress + "\",\"subscribe\":true}";
@@ -305,8 +333,8 @@ bool MediaControlService::onBTAvrcpKeyEventsCb(LSHandle *lshandle, LSMessage *me
 bool MediaControlService::registerMediaSession(LSMessage& message) {
   PMLOG_INFO(CONST_MODULE_MCS, "%s IN", __FUNCTION__);
 
-  LSMessageJsonParser msg(&message,SCHEMA_3(REQUIRED(mediaId, string),REQUIRED( \
-  appId, string),REQUIRED(subscribe, boolean)));
+  LSMessageJsonParser msg(&message,STRICT_SCHEMA(PROPS_3(REQUIRED(mediaId, string),REQUIRED( \
+  appId, string),REQUIRED(subscribe, boolean)) REQUIRED_3(mediaId, appId, subscribe)));
 
   LS::Message request(&message);
   bool returnValue = false;
@@ -369,7 +397,7 @@ bool MediaControlService::registerMediaSession(LSMessage& message) {
 bool MediaControlService::unregisterMediaSession(LSMessage& message) {
   PMLOG_INFO(CONST_MODULE_MCS, "%s IN", __FUNCTION__);
 
-  LSMessageJsonParser msg(&message,SCHEMA_1(REQUIRED(mediaId, string)));
+  LSMessageJsonParser msg(&message,STRICT_SCHEMA(PROPS_1(REQUIRED(mediaId, string)) REQUIRED_1(mediaId)));
 
   LS::Message request(&message);
   int errorCode = MCS_ERROR_NO_ERROR;
@@ -407,7 +435,7 @@ bool MediaControlService::unregisterMediaSession(LSMessage& message) {
 bool MediaControlService::activateMediaSession(LSMessage& message) {
   PMLOG_INFO(CONST_MODULE_MCS, "%s IN", __FUNCTION__);
 
-  LSMessageJsonParser msg(&message,SCHEMA_1(REQUIRED(mediaId, string)));
+  LSMessageJsonParser msg(&message,STRICT_SCHEMA(PROPS_1(REQUIRED(mediaId, string)) REQUIRED_1(mediaId)));
 
   LS::Message request(&message);
   int errorCode = MCS_ERROR_NO_ERROR;
@@ -445,7 +473,7 @@ bool MediaControlService::activateMediaSession(LSMessage& message) {
 bool MediaControlService::deactivateMediaSession(LSMessage& message) {
   PMLOG_INFO(CONST_MODULE_MCS, "%s IN", __FUNCTION__);
 
-  LSMessageJsonParser msg(&message,SCHEMA_1(REQUIRED(mediaId, string)));
+  LSMessageJsonParser msg(&message,STRICT_SCHEMA(PROPS_1(REQUIRED(mediaId, string)) REQUIRED_1(mediaId)));
 
   LS::Message request(&message);
   int errorCode = MCS_ERROR_NO_ERROR;
@@ -483,7 +511,7 @@ bool MediaControlService::deactivateMediaSession(LSMessage& message) {
 bool MediaControlService::getMediaMetaData(LSMessage& message) {
   PMLOG_INFO(CONST_MODULE_MCS, "%s IN", __FUNCTION__);
 
-  LSMessageJsonParser msg(&message,SCHEMA_1(REQUIRED(mediaId, string)));
+  LSMessageJsonParser msg(&message,STRICT_SCHEMA(PROPS_1(REQUIRED(mediaId, string)) REQUIRED_1(mediaId)));
 
   LS::Message request(&message);
   int errorCode = MCS_ERROR_NO_ERROR;
@@ -535,7 +563,7 @@ bool MediaControlService::getMediaMetaData(LSMessage& message) {
 bool MediaControlService::getMediaPlayStatus(LSMessage& message) {
   PMLOG_INFO(CONST_MODULE_MCS, "%s IN", __FUNCTION__);
 
-  LSMessageJsonParser msg(&message,SCHEMA_1(REQUIRED(mediaId, string)));
+  LSMessageJsonParser msg(&message,STRICT_SCHEMA(PROPS_1(REQUIRED(mediaId, string)) REQUIRED_1(mediaId)));
 
   LS::Message request(&message);
   int errorCode = MCS_ERROR_NO_ERROR;
@@ -578,7 +606,7 @@ bool MediaControlService::getMediaPlayStatus(LSMessage& message) {
 bool MediaControlService::getMediaSessionInfo(LSMessage& message) {
   PMLOG_INFO(CONST_MODULE_MCS, "%s IN", __FUNCTION__);
 
-  LSMessageJsonParser msg(&message,SCHEMA_1(REQUIRED(mediaId, string)));
+  LSMessageJsonParser msg(&message,STRICT_SCHEMA(PROPS_1(REQUIRED(mediaId, string)) REQUIRED_1(mediaId)));
 
   LS::Message request(&message);
   int errorCode = MCS_ERROR_NO_ERROR;
@@ -635,7 +663,7 @@ bool MediaControlService::getMediaSessionInfo(LSMessage& message) {
 bool MediaControlService::getMediaSessionId(LSMessage& message) {
   PMLOG_INFO(CONST_MODULE_MCS, "%s IN", __FUNCTION__);
 
-  LSMessageJsonParser msg(&message,SCHEMA_1(REQUIRED(appId, string)));
+  LSMessageJsonParser msg(&message,STRICT_SCHEMA(PROPS_1(REQUIRED(appId, string)) REQUIRED_1(appId)));
 
   LS::Message request(&message);
   int errorCode = MCS_ERROR_NO_ERROR;
@@ -732,12 +760,12 @@ bool MediaControlService::setMediaMetaData(LSMessage& message) {
   LSMessageJsonParser msg(&message,STRICT_SCHEMA(PROPS_2(OBJECT(mediaMetaData, OBJSCHEMA_7( \
   OPTIONAL(title, string),OPTIONAL(artist, string),OPTIONAL(totalDuration, string),OPTIONAL( \
   album, string),OPTIONAL(genre, string),OPTIONAL(trackNumber, integer),OPTIONAL(volume, integer) \
-	)),REQUIRED(mediaId, string))));
+  )),REQUIRED(mediaId, string)) REQUIRED_2(mediaMetaData, mediaId)));
 
   LS::Message request(&message);
   int errorCode = MCS_ERROR_NO_ERROR;
   std::string errorText;
-	std::string response;
+  std::string response;
   if (!msg.parse(__FUNCTION__)) {
     PMLOG_ERROR(CONST_MODULE_MCS, "%s Parsing failed", __FUNCTION__);
     errorCode = MCS_ERROR_PARSING_FAILED;
@@ -784,7 +812,8 @@ bool MediaControlService::setMediaMetaData(LSMessage& message) {
 bool MediaControlService::setMediaPlayStatus(LSMessage& message) {
   PMLOG_INFO(CONST_MODULE_MCS, "%s IN", __FUNCTION__);
 
-  LSMessageJsonParser msg(&message,SCHEMA_2(REQUIRED(mediaId, string),REQUIRED(playStatus, string)));
+  LSMessageJsonParser msg(&message,STRICT_SCHEMA(PROPS_2(REQUIRED(mediaId, string), \
+  REQUIRED(playStatus, string)) REQUIRED_2(mediaId, playStatus)));
 
   LS::Message request(&message);
   int errorCode = MCS_ERROR_NO_ERROR;
@@ -822,8 +851,8 @@ bool MediaControlService::setMediaPlayStatus(LSMessage& message) {
 bool MediaControlService::testKeyEvent(LSMessage &message) {
   PMLOG_INFO(CONST_MODULE_MCS, "%s IN", __FUNCTION__);
 
-  LSMessageJsonParser msg(&message,
-      SCHEMA_2(REQUIRED(mediaId, string),REQUIRED(keyEvent, string)));
+  LSMessageJsonParser msg(&message,SCHEMA_2(REQUIRED(mediaId, string), \
+  REQUIRED(keyEvent, string)));
 
   LS::Message request(&message);
   int errorCode = MCS_ERROR_NO_ERROR;
