@@ -260,12 +260,11 @@ bool MediaControlService::onBTAvrcpGetStatusCb(LSHandle *lshandle, LSMessage *me
       //subscribe to bt key events
       MediaControlService *obj = static_cast<MediaControlService *>(ctx);
       if(obj) {
-        int displayId = (defaultAdapterAddress_ == adapterAddress) ? 0 : 1;
-        BTDeviceInfo objDevInfo(address, adapterAddress, displayId);
+        BTDeviceInfo objDevInfo(address, adapterAddress);
         //save the details of BT device connected
         obj->ptrMediaControlPrivate_->setBTDeviceInfo(objDevInfo);
 
-        std::string payload = "{\"address\":\"" + address + "\",\"subscribe\":true}";
+        std::string payload = "{\"address\":\"" + address + "\",\"adapterAddress\":\"" + adapterAddress + "\",\"subscribe\":true}";
         PMLOG_INFO(CONST_MODULE_MCS, "%s payload : %s", __FUNCTION__, payload.c_str());
         CLSError lserror;
         if (!LSCall(obj->lsHandle_,
@@ -310,10 +309,13 @@ bool MediaControlService::onBTAvrcpKeyEventsCb(LSHandle *lshandle, LSMessage *me
       MediaControlService *obj = static_cast<MediaControlService *>(ctx);
       if(obj) {
         //get latest client from media session manager
+        int displayIdForBT = (defaultAdapterAddress_ == adapterAddress) ? 0 : 1;
         std::string mediaId = obj->ptrMediaControlPrivate_->getMediaId(address);
+        int displayIdForMedia = obj->ptrMediaSessionMgr_->getDisplayIdForMedia(mediaId);
         PMLOG_INFO(CONST_MODULE_MCS, "%s mediaId for sending BT key event : %s", __FUNCTION__, mediaId.c_str());
+        PMLOG_INFO(CONST_MODULE_MCS, "%s displayIdForBT = %d displayIdForMedia = %d", __FUNCTION__, displayIdForBT, displayIdForMedia);
         //post key event to application
-        if(!mediaId.empty()) {
+        if(!mediaId.empty() && (displayIdForBT == displayIdForMedia)) {
           pbnjson::JValue responseObj = pbnjson::Object();
           responseObj.put("keyEvent", keyCode);
           responseObj.put("mediaId", mediaId);

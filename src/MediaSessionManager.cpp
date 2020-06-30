@@ -191,3 +191,14 @@ bool MediaSessionManager::validatePlayStatus(const std::string& playStatus) {
   else
     return false;
 }
+
+int MediaSessionManager::getDisplayIdForMedia(const std::string& mediaId) {
+  PMLOG_INFO(CONST_MODULE_MSM, "%s mediaId = %s", __FUNCTION__, mediaId.c_str());
+  for (const auto& itr : mapMediaSessionInfo_) {
+    if(mediaId == itr.first) {
+      std::string appId = itr.second.getAppId();
+      return (appId.back()-48);
+    }
+  }
+  return 0;
+}
