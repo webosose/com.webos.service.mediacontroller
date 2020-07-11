@@ -312,6 +312,10 @@ bool MediaControlService::onBTAvrcpKeyEventsCb(LSHandle *lshandle, LSMessage *me
         int displayIdForBT = (defaultAdapterAddress_ == adapterAddress) ? 0 : 1;
         std::string mediaId = obj->ptrMediaControlPrivate_->getMediaId(address);
         int displayIdForMedia = obj->ptrMediaSessionMgr_->getDisplayIdForMedia(mediaId);
+        //ToDo : Below platform check to be removed once multi intsnace support available in chromium for OSE
+#if defined(PLATFORM_RASPBERRYPI4)
+        displayIdForBT = displayIdForMedia = 0;
+#endif
         PMLOG_INFO(CONST_MODULE_MCS, "%s mediaId for sending BT key event : %s", __FUNCTION__, mediaId.c_str());
         PMLOG_INFO(CONST_MODULE_MCS, "%s displayIdForBT = %d displayIdForMedia = %d", __FUNCTION__, displayIdForBT, displayIdForMedia);
         //post key event to application
