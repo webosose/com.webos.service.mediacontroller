@@ -95,13 +95,13 @@ public:
     trackNumber_(trackNumber),
     volume_(volume) {}
 
-  const std::string getTitle() const {return title_;}
-  const std::string getArtist() const {return artist_;}
-  const std::string getDuration() const {return totalDuration_;}
-  const std::string getAlbum() const {return album_;}
-  const std::string getGenre() const {return genre_;}
-  const int getTrackNumber() const {return trackNumber_;}
-  const int getVolume() const {return volume_;}
+  std::string getTitle() const {return title_;}
+  std::string getArtist() const {return artist_;}
+  std::string getDuration() const {return totalDuration_;}
+  std::string getAlbum() const {return album_;}
+  std::string getGenre() const {return genre_;}
+  int getTrackNumber() const {return trackNumber_;}
+  int getVolume() const {return volume_;}
 
   void setTitle(const std::string& title) {
     title_ = title;
@@ -142,12 +142,12 @@ public:
     appId_(appId),
     playStatus_(CSTR_EMPTY) {}
 
-  const std::string getMediaId() const { return mediaId_; }
-  const std::string getAppId() const { return appId_; }
-  const std::string getPlayStatus() const {
+  std::string getMediaId() const { return mediaId_; }
+  std::string getAppId() const { return appId_; }
+  std::string getPlayStatus() const {
     return playStatus_;
   }
-  const mediaMetaData getMediaMetaDataObj() const { return objMetaData_; }
+  mediaMetaData getMediaMetaDataObj() const { return objMetaData_; }
 
   void setMediaId(const std::string& mediaId) {
     mediaId_ = mediaId;

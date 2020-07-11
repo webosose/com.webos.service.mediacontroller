@@ -41,8 +41,8 @@ bool LSMessageJsonParser::parse(const char * callerFunction,
       errorText = "Not a valid json message";
     }
     else {
-      PMLOG_ERROR(CONST_MODULE_MCS, "%s : Could not validate json message '%s' sent \
-                 '%s' against schema '%s'.",
+      PMLOG_ERROR(CONST_MODULE_MCS, "%s : Could not validate json message '%s'\
+                 against schema '%s'.",
                  callerFunction, payload, mSchemaText_);
      }
      std::string reply = createJsonReplyString(false, 1, errorText);
