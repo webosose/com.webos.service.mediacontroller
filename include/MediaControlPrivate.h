@@ -27,6 +27,10 @@
 class MediaControlPrivate
 {
 public:
+  bool playStatus_;
+  bool muteStatus_;
+  bool playPosition_;
+  bool mediaMetaData_;
   static MediaControlPrivate &getInstance();
 
   void setBTDeviceInfo(const BTDeviceInfo& objDevInfo);
