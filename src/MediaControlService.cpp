@@ -51,6 +51,10 @@ MediaControlService::MediaControlService()
   LS_CATEGORY_METHOD(getActiveMediaSessions)
   LS_CATEGORY_METHOD(setMediaMetaData)
   LS_CATEGORY_METHOD(setMediaPlayStatus)
+  LS_CATEGORY_METHOD(setMediaMuteStatus)
+  LS_CATEGORY_METHOD(setMediaPlayPosition)
+  LS_CATEGORY_METHOD(receiveMediaPlaybackInfo)
+  LS_CATEGORY_METHOD(setKeyEvent)
   LS_CATEGORY_METHOD(testKeyEvent)
   LS_CATEGORY_END;
 
@@ -535,7 +539,6 @@ bool MediaControlService::getMediaMetaData(LSMessage& message) {
   std::string mediaId;
   msg.get("mediaId", mediaId);
   PMLOG_INFO(CONST_MODULE_MCS, "%s mediaId : %s", __FUNCTION__, mediaId.c_str());
-
   mediaMetaData objMetaData;
   if(ptrMediaSessionMgr_)
     errorCode = ptrMediaSessionMgr_->getMediaMetaData(mediaId, objMetaData);
@@ -783,7 +786,7 @@ bool MediaControlService::setMediaMetaData(LSMessage& message) {
 
   pbnjson::JValue payload = msg.get();
   std::string mediaId = payload["mediaId"].asString();
-  //extract mediaMetaData info
+ /* extract mediaMetaData info */
   pbnjson::JValue metaData = payload["mediaMetaData"];
   std::string title = metaData["title"].asString();
   std::string artist = metaData["artist"].asString();
@@ -802,8 +805,34 @@ bool MediaControlService::setMediaMetaData(LSMessage& message) {
   if(ptrMediaSessionMgr_)
     errorCode = ptrMediaSessionMgr_->setMediaMetaData(mediaId, objMetaData);
 
-  if(MCS_ERROR_NO_ERROR == errorCode)
+  if(MCS_ERROR_NO_ERROR == errorCode){
     response = createJsonReplyString(true);
+    if(ptrMediaControlPrivate_->mediaMetaData_){
+      /*Get display ID from media ID*/
+      int displayId = ptrMediaSessionMgr_->getDisplayIdForMedia(mediaId);
+      //ToDo : Below platform check to be removed once dual blueetooth support in OSE
+#if defined(PLATFORM_RASPBERRYPI4)
+      displayId = 0;
+#endif
+      pbnjson::JObject metaDataObj;
+      errorCode = updateMetaDataResponse(mediaId, metaDataObj);
+      pbnjson::JValue responsePayload = pbnjson::Object();
+      responsePayload.put("mediaMetaData", metaDataObj);
+      responsePayload.put("displayId", displayId);
+      responsePayload.put("eventType", "mediaMetaData");
+      responsePayload.put("returnValue", true);
+      responsePayload.put("subscribed", true);
+      PMLOG_INFO(CONST_MODULE_MCS, "%s send subscription response :%s", __FUNCTION__, responsePayload.stringify().c_str());
+      /*Add subscription for receiveMediaPlaybackInfo*/
+      CLSError lserror;
+      if (!LSSubscriptionReply(lsHandle_,"receiveMediaPlaybackInfo" , responsePayload.stringify().c_str(), &lserror)){
+        PMLOG_ERROR(CONST_MODULE_MCS,"%s LSSubscriptionReply failed", __FUNCTION__);
+        errorCode = MCS_ERROR_SUBSCRIPTION_REPLY_FAILED;
+        errorText = CSTR_SUBSCRIPTION_REPLY_FAILED;
+        response = createJsonReplyString(false, errorCode, errorText);
+      }
+    }
+  }
   else {
     errorText = getErrorTextFromErrorCode(errorCode);
     response = createJsonReplyString(false, errorCode, errorText);
@@ -837,14 +866,345 @@ bool MediaControlService::setMediaPlayStatus(LSMessage& message) {
   pbnjson::JValue payload = msg.get();
   std::string mediaId = payload["mediaId"].asString();
   std::string playStatus = payload["playStatus"].asString();
-  //set playstatus in MSM
+  /*  set play status in MSM  */
   if(ptrMediaSessionMgr_)
     errorCode = ptrMediaSessionMgr_->setMediaPlayStatus(mediaId, playStatus);
 
-  if(MCS_ERROR_NO_ERROR == errorCode)
+  if(MCS_ERROR_NO_ERROR == errorCode){
     response = createJsonReplyString(true);
+
+    if(ptrMediaControlPrivate_->playStatus_){
+      /*Get display ID from media ID*/
+      int displayId = ptrMediaSessionMgr_->getDisplayIdForMedia(mediaId);
+      //ToDo : Below platform check to be removed once dual blueetooth support in OSE
+#if defined(PLATFORM_RASPBERRYPI4)
+      displayId = 0;
+#endif
+      pbnjson::JValue responsePayload = pbnjson::Object();
+      responsePayload.put("playStatus", playStatus);
+      responsePayload.put("displayId", displayId);
+      responsePayload.put("eventType", "playStatus");
+      responsePayload.put("returnValue", true);
+      responsePayload.put("subscribed", true);
+      PMLOG_INFO(CONST_MODULE_MCS, "%s send subscription response :%s", __FUNCTION__, responsePayload.stringify().c_str());
+      /*Add subscription for receiveMediaPlaybackInfo*/
+      CLSError lserror;
+      if (!LSSubscriptionReply(lsHandle_,"receiveMediaPlaybackInfo" , responsePayload.stringify().c_str(), &lserror)){
+        PMLOG_ERROR(CONST_MODULE_MCS,"%s LSSubscriptionReply failed", __FUNCTION__);
+        errorCode = MCS_ERROR_SUBSCRIPTION_REPLY_FAILED;
+        errorText = CSTR_SUBSCRIPTION_REPLY_FAILED;
+        response = createJsonReplyString(false, errorCode, errorText);
+      }
+    }
+  }
   else {
     errorText = getErrorTextFromErrorCode(errorCode);
+    response = createJsonReplyString(false, errorCode, errorText);
+  }
+
+  PMLOG_INFO(CONST_MODULE_MCS, "%s response : %s", __FUNCTION__, response.c_str());
+  request.respond(response.c_str());
+
+  return true;
+}
+
+bool MediaControlService::setMediaMuteStatus (LSMessage & message){
+  PMLOG_INFO(CONST_MODULE_MCS, "%s IN", __FUNCTION__);
+
+  LSMessageJsonParser msg(&message,STRICT_SCHEMA(PROPS_2(REQUIRED(mediaId, string), \
+  REQUIRED(muteStatus, string)) REQUIRED_2(mediaId, muteStatus)));
+
+  LS::Message request(&message);
+  int errorCode = MCS_ERROR_NO_ERROR;
+  std::string errorText;
+  std::string response;
+  if (!msg.parse(__FUNCTION__)) {
+    PMLOG_ERROR(CONST_MODULE_MCS, "%s Parsing failed", __FUNCTION__);
+    errorCode = MCS_ERROR_PARSING_FAILED;
+    errorText = CSTR_PARSING_ERROR;
+    response = createJsonReplyString(false, errorCode, errorText);
+    request.respond(response.c_str());
+    return true;
+  }
+
+  pbnjson::JValue payload = msg.get();
+  std::string mediaId = payload["mediaId"].asString();
+  std::string muteStatus = payload["muteStatus"].asString();
+  if(muteStatus == "MUTE")
+    muteStatus = "mute";
+  else if(muteStatus == "UNMUTE")
+    muteStatus = "unmute";
+
+  PMLOG_INFO(CONST_MODULE_MCS, "%s mediaId : %s muteStatus : %s ",
+                                __FUNCTION__, mediaId.c_str(), muteStatus.c_str());
+  /*validate the MediaId*/
+  if(ptrMediaSessionMgr_)
+    errorCode = ptrMediaSessionMgr_->setMediaMuteStatus(mediaId, muteStatus);
+
+  if(MCS_ERROR_NO_ERROR == errorCode){
+    response = createJsonReplyString(true);
+    if(ptrMediaControlPrivate_->muteStatus_){
+      /*Get display ID from media ID*/
+      int displayId = ptrMediaSessionMgr_->getDisplayIdForMedia(mediaId);
+      //ToDo : Below platform check to be removed once dual blueetooth support in OSE
+#if defined(PLATFORM_RASPBERRYPI4)
+      displayId = 0;
+#endif
+      pbnjson::JValue responsePayload = pbnjson::Object();
+      responsePayload.put("muteStatus", muteStatus);
+      responsePayload.put("displayId", displayId);
+      responsePayload.put("eventType", "muteStatus");
+      responsePayload.put("returnValue", true);
+      responsePayload.put("subscribed", true);
+      PMLOG_INFO(CONST_MODULE_MCS, "%s send subscription response :%s", __FUNCTION__, responsePayload.stringify().c_str());
+      /*LSSubscriptionReply for receiveMediaPlaybackInfo*/
+      CLSError lserror;
+      if (!LSSubscriptionReply(lsHandle_,"receiveMediaPlaybackInfo" , responsePayload.stringify().c_str(), &lserror)){
+        PMLOG_ERROR(CONST_MODULE_MCS,"%s LSSubscriptionReply failed", __FUNCTION__);
+        errorCode = MCS_ERROR_SUBSCRIPTION_REPLY_FAILED;
+        errorText = CSTR_SUBSCRIPTION_REPLY_FAILED;
+        response = createJsonReplyString(false, errorCode, errorText);
+      }
+  }
+  }
+  else {
+    errorText = getErrorTextFromErrorCode(errorCode);
+    response = createJsonReplyString(false, errorCode, errorText);
+  }
+
+  PMLOG_INFO(CONST_MODULE_MCS, "%s response : %s", __FUNCTION__, response.c_str());
+  request.respond(response.c_str());
+
+  return true;
+}
+
+bool MediaControlService::setMediaPlayPosition (LSMessage & message){
+  PMLOG_INFO(CONST_MODULE_MCS, "%s IN", __FUNCTION__);
+
+  LSMessageJsonParser msg(&message,STRICT_SCHEMA(PROPS_2(REQUIRED(mediaId, string), \
+  REQUIRED(playPosition, string)) REQUIRED_2(mediaId, playPosition)));
+
+  LS::Message request(&message);
+  int errorCode = MCS_ERROR_NO_ERROR;
+  std::string errorText;
+  std::string response;
+  if (!msg.parse(__FUNCTION__)) {
+    PMLOG_ERROR(CONST_MODULE_MCS, "%s Parsing failed", __FUNCTION__);
+    errorCode = MCS_ERROR_PARSING_FAILED;
+    errorText = CSTR_PARSING_ERROR;
+    response = createJsonReplyString(false, errorCode, errorText);
+    request.respond(response.c_str());
+    return true;
+  }
+
+  pbnjson::JValue payload = msg.get();
+  std::string mediaId = payload["mediaId"].asString();
+  std::string playPosition = payload["playPosition"].asString();
+  PMLOG_INFO(CONST_MODULE_MCS, "%s mediaId : %s playPosition : %s ",
+                                __FUNCTION__, mediaId.c_str(), playPosition.c_str());
+  /*validate the MediaId*/
+  if(ptrMediaSessionMgr_)
+    errorCode = ptrMediaSessionMgr_->setMediaPlayPosition(mediaId, playPosition);
+
+  if(MCS_ERROR_NO_ERROR == errorCode){
+    response = createJsonReplyString(true);
+    if(ptrMediaControlPrivate_->playPosition_){
+      /*Get display ID from media ID*/
+      int displayId = ptrMediaSessionMgr_->getDisplayIdForMedia(mediaId);
+      //ToDo : Below platform check to be removed once dual blueetooth support in OSE
+#if defined(PLATFORM_RASPBERRYPI4)
+      displayId = 0;
+#endif
+      pbnjson::JValue responsePayload = pbnjson::Object();
+      responsePayload.put("playPosition", playPosition);
+      responsePayload.put("displayId", displayId);
+      responsePayload.put("eventType", "playPosition");
+      responsePayload.put("returnValue", true);
+      responsePayload.put("subscribed", true);
+      PMLOG_INFO(CONST_MODULE_MCS, "%s send subscription response :%s", __FUNCTION__, responsePayload.stringify().c_str());
+      /*LSSubscriptionReply for receiveMediaPlaybackInfo*/
+      CLSError lserror;
+      if (!LSSubscriptionReply(lsHandle_,"receiveMediaPlaybackInfo" , responsePayload.stringify().c_str(), &lserror)){
+        PMLOG_ERROR(CONST_MODULE_MCS,"%s LSSubscriptionReply failed", __FUNCTION__);
+        errorCode = MCS_ERROR_SUBSCRIPTION_REPLY_FAILED;
+        errorText = CSTR_SUBSCRIPTION_REPLY_FAILED;
+        response = createJsonReplyString(false, errorCode, errorText);
+      }
+    }
+  }
+  else {
+    errorText = getErrorTextFromErrorCode(errorCode);
+    response = createJsonReplyString(false, errorCode, errorText);
+  }
+
+  PMLOG_INFO(CONST_MODULE_MCS, "%s response : %s", __FUNCTION__, response.c_str());
+  request.respond(response.c_str());
+
+  return true;
+}
+
+bool MediaControlService::receiveMediaPlaybackInfo (LSMessage & message){
+  PMLOG_INFO(CONST_MODULE_MCS, "%s IN", __FUNCTION__);
+
+  LSMessageJsonParser msg(&message,STRICT_SCHEMA(PROPS_3(REQUIRED(displayId, integer), \
+    OPTIONAL(eventType, string),REQUIRED(subscribe, boolean)) REQUIRED_2(displayId, subscribe)));
+
+  LS::Message request(&message);
+  int errorCode = MCS_ERROR_NO_ERROR;
+  std::string errorText;
+  std::string response;
+  if (!msg.parse(__FUNCTION__)) {
+    PMLOG_ERROR(CONST_MODULE_MCS, "%s Parsing failed", __FUNCTION__);
+    errorCode = MCS_ERROR_PARSING_FAILED;
+    errorText = CSTR_PARSING_ERROR;
+    response = createJsonReplyString(false, errorCode, errorText);
+    request.respond(response.c_str());
+    return true;
+  }
+
+  pbnjson::JValue payload = msg.get();
+  int displayId  = payload["displayId"].asNumber<int>();
+      //ToDo : Below platform check to be removed once dual blueetooth support in OSE
+#if defined(PLATFORM_RASPBERRYPI4)
+      displayId = 0;
+#endif
+  bool subscribed = payload["subscribe"].asBool();
+  std::string eventType = payload["eventType"].asString();
+  if(!strcmp(eventType.c_str(), "playStatus")){
+    ptrMediaControlPrivate_->playStatus_ = true;
+  }else if (!strcmp(eventType.c_str(), "muteStatus")){
+    ptrMediaControlPrivate_->muteStatus_ = true;
+  }else if (!strcmp(eventType.c_str(), "playPosition")){
+    ptrMediaControlPrivate_->playPosition_ = true;
+  }else if (!strcmp(eventType.c_str(), "mediaMetaData")){
+    ptrMediaControlPrivate_->mediaMetaData_ = true;
+  }else if (!strcmp(eventType.c_str(), CSTR_EMPTY.c_str())){
+    ptrMediaControlPrivate_->playStatus_ = true;
+    ptrMediaControlPrivate_->muteStatus_ = true;
+    ptrMediaControlPrivate_->playPosition_ = true;
+    ptrMediaControlPrivate_->mediaMetaData_ = true;
+  }
+
+  PMLOG_INFO(CONST_MODULE_MCS, "%s displayId : %d subscribe : %d  eventType : %s",__FUNCTION__, displayId, subscribed, eventType.c_str());
+  response = createJsonReplyString(true);
+  /*LSSubscriptionAdd for sendMediaMetaData*/
+  if (LSMessageIsSubscription(&message)) {
+    CLSError lserror;
+    if (!LSSubscriptionAdd(lsHandle_, "receiveMediaPlaybackInfo", &message, &lserror)) {
+        PMLOG_ERROR(CONST_MODULE_MCS, "%s LSSubscriptionAdd failed ",__FUNCTION__);
+        errorCode = MCS_ERROR_SUBSCRIPTION_FAILED;
+        errorText = CSTR_SUBSCRIPTION_FAILED;
+        response = createJsonReplyString(false, errorCode, errorText);
+    }
+  }
+  else {
+    errorText = getErrorTextFromErrorCode(errorCode);
+    response = createJsonReplyString(false, errorCode, errorText);
+  }
+  /*Create subscription reply*/
+  /*get mediaId from displayId*/
+  std::string mediaId = ptrMediaSessionMgr_->getMediaIdFromDisplayId(displayId);
+  if(mediaId.c_str()){
+    pbnjson::JValue responsePayload = pbnjson::Object();
+    if(eventType == "playPosition" || eventType.empty()){
+      std::string playPosition;
+      if(ptrMediaSessionMgr_)
+        errorCode = ptrMediaSessionMgr_->getMediaPlayPosition(mediaId, playPosition);
+      responsePayload.put("playPosition", playPosition);
+
+    }
+    if(eventType == "playStatus" ||eventType.empty()){
+      std::string playStatus;
+      if(ptrMediaSessionMgr_)
+        errorCode = ptrMediaSessionMgr_->getMediaPlayStatus(mediaId, playStatus);
+      responsePayload.put("playStatus", playStatus);
+    }
+    if(eventType == "muteStatus" || eventType.empty()){
+      std::string muteStatus;
+      if(ptrMediaSessionMgr_)
+        errorCode = ptrMediaSessionMgr_->getMediaMuteStatus(mediaId, muteStatus);
+      responsePayload.put("muteStatus", muteStatus);
+    }
+    if(eventType == "mediaMetaData" || eventType.empty()){
+      pbnjson::JObject metaDataObj;
+      errorCode = updateMetaDataResponse(mediaId, metaDataObj);
+      responsePayload.put("mediaMetaData", metaDataObj);
+    }
+    if(!eventType.empty())
+      responsePayload.put("eventType", eventType);
+
+    responsePayload.put("displayId", displayId);
+    responsePayload.put("returnValue", true);
+    responsePayload.put("subscribed", true);
+    PMLOG_INFO(CONST_MODULE_MCS, "%s send subscription response :%s", __FUNCTION__, responsePayload.stringify().c_str());
+    /*LSSubscriptionReply for receiveMediaPlaybackInfo*/
+    CLSError lserror;
+    if (!LSSubscriptionReply(lsHandle_,"receiveMediaPlaybackInfo" , responsePayload.stringify().c_str(), &lserror)){
+      PMLOG_ERROR(CONST_MODULE_MCS,"%s LSSubscriptionReply failed", __FUNCTION__);
+      errorCode = MCS_ERROR_SUBSCRIPTION_REPLY_FAILED;
+      errorText = CSTR_SUBSCRIPTION_REPLY_FAILED;
+      response = createJsonReplyString(false, errorCode, errorText);
+    }
+  }
+
+  PMLOG_INFO(CONST_MODULE_MCS, "%s response : %s", __FUNCTION__, response.c_str());
+  request.respond(response.c_str());
+
+  return true;
+}
+
+bool MediaControlService::setKeyEvent(LSMessage &message) {
+  PMLOG_INFO(CONST_MODULE_MCS, "%s IN", __FUNCTION__);
+
+  LSMessageJsonParser msg(&message,STRICT_SCHEMA(PROPS_2(REQUIRED(displayId, integer), \
+  REQUIRED(keyEvent, string)) REQUIRED_2(displayId, keyEvent)));
+
+  LS::Message request(&message);
+  int errorCode = MCS_ERROR_NO_ERROR;
+  std::string errorText;
+  std::string response;
+  if (!msg.parse(__FUNCTION__)) {
+    PMLOG_ERROR(CONST_MODULE_MCS, "%s Parsing failed", __FUNCTION__);
+    errorCode = MCS_ERROR_PARSING_FAILED;
+    errorText = CSTR_PARSING_ERROR;
+    response = createJsonReplyString(false, errorCode, errorText);
+    request.respond(response.c_str());
+    return true;
+  }
+
+  pbnjson::JValue payload = msg.get();
+  int displayId  = payload["displayId"].asNumber<int>();
+      //ToDo : Below platform check to be removed once dual blueetooth support in OSE
+#if defined(PLATFORM_RASPBERRYPI4)
+      displayId = 0;
+#endif
+  std::string keyEvent = payload["keyEvent"].asString();
+  PMLOG_INFO(CONST_MODULE_MCS, "%s displayId : %d keyEvent : %s ",
+                                __FUNCTION__, displayId, keyEvent.c_str());
+
+  pbnjson::JValue responsePayload = pbnjson::Object();
+  /*get mediaId from displayId*/
+  std::string mediaId = ptrMediaSessionMgr_->getMediaIdFromDisplayId(displayId);
+  if(!mediaId.c_str()) {
+    PMLOG_ERROR(CONST_MODULE_MCS, "%s get mediaId from displayId is invalid ", __FUNCTION__);
+    errorCode = MCS_ERROR_NO_ACTIVE_SESSION;
+    errorText = CSTR_NO_ACTIVE_SESSION;
+    response = createJsonReplyString(false, errorCode, errorText);
+    request.respond(response.c_str());
+    return true;
+  }
+  responsePayload.put("mediaId", mediaId);
+  responsePayload.put("keyEvent", keyEvent);
+  responsePayload.put("returnValue", true);
+  responsePayload.put("subscribed", true);
+  PMLOG_INFO(CONST_MODULE_MCS, "%s send subscription response :%s", __FUNCTION__, responsePayload.stringify().c_str());
+  response = createJsonReplyString(true);
+  /*LSSubscriptionReply for registerMediaSession*/
+  CLSError lserror;
+  if (!LSSubscriptionReply(lsHandle_,"registerMediaSession" , responsePayload.stringify().c_str(), &lserror)){
+    PMLOG_ERROR(CONST_MODULE_MCS,"%s LSSubscriptionReply failed", __FUNCTION__);
+    errorCode = MCS_ERROR_SUBSCRIPTION_REPLY_FAILED;
+    errorText = CSTR_SUBSCRIPTION_REPLY_FAILED;
     response = createJsonReplyString(false, errorCode, errorText);
   }
 
@@ -896,6 +1256,44 @@ bool MediaControlService::testKeyEvent(LSMessage &message) {
   responseObj1.put("returnValue", true);
   request.respond(responseObj1.stringify().c_str());
   return true;
+}
+
+int  MediaControlService:: updateMetaDataResponse (const std::string &mediaId,  pbnjson::JObject &metaDataObj) {
+  int errorCode = MCS_ERROR_NO_ERROR;
+  if(ptrMediaSessionMgr_){
+    mediaMetaData objMetaData;
+    errorCode = ptrMediaSessionMgr_->getMediaMetaData(mediaId, objMetaData);
+    if (errorCode == MCS_ERROR_NO_ERROR){
+      std::string title = objMetaData.getTitle();
+      if(!title.empty())
+        metaDataObj.put("title", title);
+
+      std::string artist = objMetaData.getArtist();
+      if(!artist.empty())
+        metaDataObj.put("artist", artist);
+
+      std::string totalDuration = objMetaData.getDuration();
+      if(!totalDuration.empty())
+        metaDataObj.put("totalDuration", totalDuration);
+
+      std::string album = objMetaData.getAlbum();
+      if(!album.empty())
+        metaDataObj.put("album", album);
+
+      std::string genre = objMetaData.getGenre();
+      if(!genre.empty())
+        metaDataObj.put("genre", genre);
+
+      int trackNumber = objMetaData.getTrackNumber();
+      if(trackNumber)
+        metaDataObj.put("trackNumber", trackNumber);
+
+      int volume = objMetaData.getVolume();
+      if(volume)
+        metaDataObj.put("volume", volume);
+    }
+  }
+  return errorCode;
 }
 
 int main(int argc, char *argv[]) {
