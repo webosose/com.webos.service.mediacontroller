@@ -35,6 +35,16 @@ void MediaControlPrivate::setBTDeviceInfo(const BTDeviceInfo& objDevInfo) {
   mapDeviceInfo_[deviceAddress] = objDevInfo;
 }
 
+BTDeviceInfo MediaControlPrivate::getBTDeviceInfo() {
+  PMLOG_INFO(CONST_MODULE_MCP, "%s Connected device GetBTdeviceInfo ", __FUNCTION__);
+  BTDeviceInfo objDevInfo;
+  for(const auto& itr : mapDeviceInfo_) {
+    objDevInfo.deviceAddress_ = itr.first;
+    objDevInfo.adapterAddress_ = itr.second.adapterAddress_;
+  }
+  return objDevInfo;
+}
+
 std::string MediaControlPrivate::getMediaId(const std::string& deviceAddress) {
   PMLOG_INFO(CONST_MODULE_MCP, "%s for device Address : %s", __FUNCTION__, deviceAddress.c_str());
   std::string mediaId;

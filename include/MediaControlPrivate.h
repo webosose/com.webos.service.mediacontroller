@@ -30,6 +30,7 @@ public:
   static MediaControlPrivate &getInstance();
 
   void setBTDeviceInfo(const BTDeviceInfo& objDevInfo);
+  BTDeviceInfo getBTDeviceInfo();
   std::string getMediaId(const std::string& deviceAddress);
 
 private:

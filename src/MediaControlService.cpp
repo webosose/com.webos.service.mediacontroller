@@ -260,19 +260,24 @@ bool MediaControlService::onBTAvrcpGetStatusCb(LSHandle *lshandle, LSMessage *me
       //subscribe to bt key events
       MediaControlService *obj = static_cast<MediaControlService *>(ctx);
       if(obj) {
-        BTDeviceInfo objDevInfo(address, adapterAddress);
-        //save the details of BT device connected
-        obj->ptrMediaControlPrivate_->setBTDeviceInfo(objDevInfo);
+        BTDeviceInfo getObjBTDevInfo;
+        getObjBTDevInfo = obj->ptrMediaControlPrivate_->getBTDeviceInfo();
 
-        std::string payload = "{\"address\":\"" + address + "\",\"adapterAddress\":\"" + adapterAddress + "\",\"subscribe\":true}";
-        PMLOG_INFO(CONST_MODULE_MCS, "%s payload : %s", __FUNCTION__, payload.c_str());
-        CLSError lserror;
-        if (!LSCall(obj->lsHandle_,
-                    cstrBTAvrcpReceivePassThroughCommand.c_str(),
-                    payload.c_str(),
-                    &MediaControlService::onBTAvrcpKeyEventsCb,
-                    ctx, NULL, &lserror))
-          PMLOG_ERROR(CONST_MODULE_MCS,"%s LSCall failed to avrcp/receivePassThroughCommand", __FUNCTION__);
+        if(getObjBTDevInfo.deviceAddress_ != address && getObjBTDevInfo.adapterAddress_ != adapterAddress) {
+          BTDeviceInfo objDevInfo(address, adapterAddress);
+          //save the details of BT device connected
+          obj->ptrMediaControlPrivate_->setBTDeviceInfo(objDevInfo);
+
+          std::string payload = "{\"address\":\"" + address + "\",\"adapterAddress\":\"" + adapterAddress + "\",\"subscribe\":true}";
+          PMLOG_INFO(CONST_MODULE_MCS, "%s payload : %s", __FUNCTION__, payload.c_str());
+          CLSError lserror;
+          if (!LSCall(obj->lsHandle_,
+                      cstrBTAvrcpReceivePassThroughCommand.c_str(),
+                      payload.c_str(),
+                      &MediaControlService::onBTAvrcpKeyEventsCb,
+                      ctx, NULL, &lserror))
+           PMLOG_ERROR(CONST_MODULE_MCS,"%s LSCall failed to avrcp/receivePassThroughCommand", __FUNCTION__);
+        }
       }
     }
   }
