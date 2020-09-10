@@ -122,31 +122,6 @@ int MediaSessionManager::getMediaPlayStatus(const std::string& mediaId,
   return MCS_ERROR_INVALID_MEDIAID;
 }
 
-int MediaSessionManager::getMediaMuteStatus(const std::string& mediaId,
-                                             std::string& muteStatus) {
-  PMLOG_INFO(CONST_MODULE_MSM, "%s mediaId : %s", __FUNCTION__, mediaId.c_str());
-
-  const auto& itr = mapMediaSessionInfo_.find(mediaId);
-  if(itr != mapMediaSessionInfo_.end()) {
-    muteStatus = itr->second.getMuteStatus();
-    return MCS_ERROR_NO_ERROR;
-  }
-  PMLOG_ERROR(CONST_MODULE_MSM, "%s MediaId doesnt exists", __FUNCTION__);
-  return MCS_ERROR_INVALID_MEDIAID;
-}
-
-int MediaSessionManager::getMediaPlayPosition(const std::string& mediaId,
-                                             std::string& playPosition) {
-  PMLOG_INFO(CONST_MODULE_MSM, "%s mediaId : %s", __FUNCTION__, mediaId.c_str());
-
-  const auto& itr = mapMediaSessionInfo_.find(mediaId);
-  if(itr != mapMediaSessionInfo_.end()) {
-    playPosition = itr->second.getPlayposition();
-    return MCS_ERROR_NO_ERROR;
-  }
-  PMLOG_ERROR(CONST_MODULE_MSM, "%s MediaId doesnt exists", __FUNCTION__);
-  return MCS_ERROR_INVALID_MEDIAID;
-}
 int MediaSessionManager::setMediaMetaData(const std::string& mediaId,
                                            const mediaMetaData& objMetaData) {
   PMLOG_INFO(CONST_MODULE_MSM, "%s mediaId : %s", __FUNCTION__, mediaId.c_str());
@@ -173,34 +148,6 @@ int MediaSessionManager::setMediaPlayStatus(const std::string& mediaId,
   const auto& itr = mapMediaSessionInfo_.find(mediaId);
   if(itr != mapMediaSessionInfo_.end()) {
     itr->second.setPlayStatus(playStatus);
-    return MCS_ERROR_NO_ERROR;
-  }
-  PMLOG_ERROR(CONST_MODULE_MSM, "%s MediaId doesnt exists", __FUNCTION__);
-  return MCS_ERROR_INVALID_MEDIAID;
-}
-
-int MediaSessionManager::setMediaMuteStatus(const std::string& mediaId,
-                                             const std::string& muteStatus) {
-  PMLOG_INFO(CONST_MODULE_MSM, "%s mediaId : %s muteStatus : %s", __FUNCTION__,
-                                mediaId.c_str(), muteStatus.c_str());
-
-  const auto& itr = mapMediaSessionInfo_.find(mediaId);
-  if(itr != mapMediaSessionInfo_.end()) {
-    itr->second.setMuteStatus(muteStatus);
-    return MCS_ERROR_NO_ERROR;
-  }
-  PMLOG_ERROR(CONST_MODULE_MSM, "%s MediaId doesnt exists", __FUNCTION__);
-  return MCS_ERROR_INVALID_MEDIAID;
-}
-
-int MediaSessionManager::setMediaPlayPosition(const std::string& mediaId,
-                                             const std::string& playPosition) {
-  PMLOG_INFO(CONST_MODULE_MSM, "%s mediaId : %s playPosition : %s", __FUNCTION__,
-                                mediaId.c_str(), playPosition.c_str());
-
-  const auto& itr = mapMediaSessionInfo_.find(mediaId);
-  if(itr != mapMediaSessionInfo_.end()) {
-    itr->second.setPlayposition(playPosition);
     return MCS_ERROR_NO_ERROR;
   }
   PMLOG_ERROR(CONST_MODULE_MSM, "%s MediaId doesnt exists", __FUNCTION__);
@@ -254,17 +201,4 @@ int MediaSessionManager::getDisplayIdForMedia(const std::string& mediaId) {
     }
   }
   return 0;
-}
-
-std::string MediaSessionManager::getMediaIdFromDisplayId(const int& displayId) {
-  PMLOG_INFO(CONST_MODULE_MSM, "%s displayId = %d", __FUNCTION__, displayId);
-  for (const auto& itr : mapMediaSessionInfo_) {
-    std::string appId = itr.second.getAppId();
-    int appDisplayId = (appId.back()-48);
-    if(appDisplayId == displayId){
-      std::string mediaId = objRequestRcvr_.getLastActiveClient();
-      return mediaId;
-    }
-  }
-  return CSTR_EMPTY;
 }

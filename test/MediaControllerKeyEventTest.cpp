@@ -48,8 +48,7 @@ int main(int argc, char const *argv[]) {
     std::cout << "1. Play" << std::endl << "2. Pause" << std::endl;
     std::cout << "3. Next" << std::endl << "4. Previous" << std::endl;
     std::cout << "5. VolumeUp" << std::endl << "6. VolumeDown" << std::endl;
-    std::cout << "7. Mute" << std::endl << "8. Unmute" << std::endl;
-    std::cout << "9. PlayInfo" << std::endl << "10. Exit" << std::endl;
+    std::cout << "7.Exit" << std::endl;
     std::cin >> choice;
     switch (choice) {
     case 1: {
@@ -95,27 +94,6 @@ int main(int argc, char const *argv[]) {
       break;
     }
     case 7: {
-      std::string keyEventMute = serviceUri + "/testKeyEvent '{\"mediaId\":\"xDFNUI\", \"keyEvent\":\"mute\"}'";
-      std::cout << keyEventMute << std::endl;
-      std::string output = getCommandOutput(keyEventMute);
-      std::cout << output << std::endl;
-      break;
-    }
-    case 8: {
-      std::string keyEventUnmute = serviceUri + "/testKeyEvent '{\"mediaId\":\"xDFNUI\", \"keyEvent\":\"unmute\"}'";
-      std::cout << keyEventUnmute << std::endl;
-      std::string output = getCommandOutput(keyEventUnmute);
-      std::cout << output << std::endl;
-      break;
-    }
-    case 9: {
-      std::string keyEventMetaData = serviceUri + "/receiveMediaPlaybackInfo '{\"displayId\":0, \"subscribe\":true}'";
-      std::cout << keyEventMetaData << std::endl;
-      std::string output = getCommandOutput(keyEventMetaData);
-      std::cout << output << std::endl;
-      break;
-    }
-    case 10: {
       flag = false;
       break;
     }

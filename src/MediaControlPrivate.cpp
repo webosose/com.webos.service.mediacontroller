@@ -19,8 +19,7 @@
 #include "MediaSessionManager.h"
 
 MediaControlPrivate::MediaControlPrivate() :
-  mapDeviceInfo_(), playStatus_(false), muteStatus_(false),
-  playPosition_(false), mediaMetaData_(false) {
+  mapDeviceInfo_() {
 }
 
 MediaControlPrivate& MediaControlPrivate::getInstance() {
