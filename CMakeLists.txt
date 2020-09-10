@@ -61,8 +61,6 @@ include_directories(${CMAKE_SOURCE_DIR}/files/systemd/)
 
 include_directories(${CMAKE_SOURCE_DIR}/include/)
 
-add_subdirectory(${CMAKE_SOURCE_DIR}/test/)
-
 set(SRC_LIST
     ${CMAKE_SOURCE_DIR}/src/MediaControlService.cpp
     ${CMAKE_SOURCE_DIR}/src/MediaSessionManager.cpp

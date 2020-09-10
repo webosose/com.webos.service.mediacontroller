@@ -45,24 +45,15 @@ public:
                           mediaSession& objMediaSession);
   int getMediaPlayStatus(const std::string& mediaId,
                          std::string& playStatus);
-  int getMediaMuteStatus(const std::string& mediaId,
-                         std::string& muteStatus);
-  int getMediaPlayPosition(const std::string& mediaId,
-                         std::string& playPosition);
   int setMediaMetaData(const std::string& mediaId,
                        const mediaMetaData& objMetaData);
   int setMediaPlayStatus(const std::string& mediaId,
                          const std::string& playStatus);
-  int setMediaMuteStatus(const std::string& mediaId,
-                         const std::string& muteStatus);
-  int setMediaPlayPosition(const std::string& mediaId,
-                         const std::string& playPosition);
   std::vector<std::string> getMediaSessionList(const std::string& appId);
   std::vector<std::string> getActiveMediaSessionList();
   std::string getCurrentActiveSession();
   bool validatePlayStatus(const std::string& playStatus);
   int getDisplayIdForMedia(const std::string& mediaId);
-  std::string getMediaIdFromDisplayId(const int& displayId);
 };
 
 #endif /*MEDIA_SESSION_MANAGER_H_*/

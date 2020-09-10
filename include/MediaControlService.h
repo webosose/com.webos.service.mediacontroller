@@ -51,17 +51,12 @@ public:
   bool getActiveMediaSessions(LSMessage &);
   bool setMediaMetaData(LSMessage &);
   bool setMediaPlayStatus(LSMessage &);
-  bool setMediaMuteStatus (LSMessage &);
-  bool setMediaPlayPosition (LSMessage &);
-  bool receiveMediaPlaybackInfo (LSMessage &);
-  bool setKeyEvent (LSMessage &);
   bool testKeyEvent(LSMessage &);
   static bool onBTServerStatusCb(LSHandle *lshandle, LSMessage *message, void *ctx);
   static bool onBTAdapterQueryCb(LSHandle *lshandle, LSMessage *message, void *ctx);
   static bool onBTDeviceGetStatusCb(LSHandle *lshandle, LSMessage *message, void *ctx);
   static bool onBTAvrcpGetStatusCb(LSHandle *lshandle, LSMessage *message, void *ctx);
   static bool onBTAvrcpKeyEventsCb(LSHandle *lshandle, LSMessage *message, void *ctx);
-  int updateMetaDataResponse(const std::string &,  pbnjson::JObject &);
 
 private:
   void subscribeToBTAdapterGetStatus();

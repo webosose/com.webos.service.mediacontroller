@@ -19,8 +19,7 @@
 #include "MediaSessionManager.h"
 
 MediaControlPrivate::MediaControlPrivate() :
-  mapDeviceInfo_(), playStatus_(false), muteStatus_(false),
-  playPosition_(false), mediaMetaData_(false) {
+  mapDeviceInfo_() {
 }
 
 MediaControlPrivate& MediaControlPrivate::getInstance() {
@@ -34,6 +33,16 @@ void MediaControlPrivate::setBTDeviceInfo(const BTDeviceInfo& objDevInfo) {
   std::string deviceAddress = objDevInfo.deviceAddress_;
   PMLOG_INFO(CONST_MODULE_MCP, "%s Connected device device Address : %s", __FUNCTION__, deviceAddress.c_str());
   mapDeviceInfo_[deviceAddress] = objDevInfo;
+}
+
+BTDeviceInfo MediaControlPrivate::getBTDeviceInfo() {
+  PMLOG_INFO(CONST_MODULE_MCP, "%s Connected device GetBTdeviceInfo ", __FUNCTION__);
+  BTDeviceInfo objDevInfo;
+  for(const auto& itr : mapDeviceInfo_) {
+    objDevInfo.deviceAddress_ = itr.first;
+    objDevInfo.adapterAddress_ = itr.second.adapterAddress_;
+  }
+  return objDevInfo;
 }
 
 std::string MediaControlPrivate::getMediaId(const std::string& deviceAddress) {
