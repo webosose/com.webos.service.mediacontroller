@@ -30,6 +30,9 @@ const std::string CSTR_INVALID_APPID = "Invalid appId";
 const std::string CSTR_NO_ACTIVE_SESSION = "No session is active";
 const std::string CSTR_SESSION_ALREADY_REGISTERED = "Media session already registered";
 const std::string CSTR_SESSION_INVALID_PLAY_STATE = "Invalid Play State";
+const std::string CSTR_SESSION_INVALID_MUTE_STATUS = "Invalid Mute Status";
+const std::string CSTR_SUBSCRIPTION_FAILED = "LSSubscriptionAdd failed";
+const std::string CSTR_SUBSCRIPTION_REPLY_FAILED = "LSSubscriptionReply failed";
 const std::string CSTR_EMPTY = "";
 
 #define CONST_MODULE_MCS "MediaControlService"
@@ -51,7 +54,10 @@ enum MCSErrorCode {
   MCS_ERROR_INVALID_APPID,
   MCS_ERROR_NO_ACTIVE_SESSION,
   MCS_ERROR_SESSION_ALREADY_REGISTERED,
+  MCS_ERROR_SUBSCRIPTION_FAILED,
+  MCS_ERROR_SUBSCRIPTION_REPLY_FAILED,
   MCS_ERROR_SESSION_INVALID_PLAY_STATE,
+  MCS_ERROR_SESSION_INVALID_MUTE_STATUS,
   MCS_ERROR_NO_ERROR
 };
 
@@ -104,25 +110,32 @@ public:
   int getVolume() const {return volume_;}
 
   void setTitle(const std::string& title) {
-    title_ = title;
+    if(!title.empty() && title_ != title)
+      title_ = title;
   }
   void setArtist(const std::string& artist) {
-    artist_ = artist;
+    if(!artist.empty() && artist_ != artist)
+      artist_ = artist;
   }
   void setDuration(const std::string& duration) {
-    totalDuration_ = duration;
+    if(!duration.empty() && totalDuration_ != duration)
+      totalDuration_ = duration;
   }
   void setAlbum(const std::string& album) {
-    album_ = album;
+    if(!album.empty() && album_ != album)
+      album_ = album;
   }
   void setGenre(const std::string& genre) {
-    genre_ = genre;
+    if(!genre.empty() && genre_ != genre)
+      genre_ = genre;
   }
   void setTrackNumber(const int& trackNum) {
-    trackNumber_ = trackNum;
+    if(trackNum && trackNumber_ != trackNum)
+      trackNumber_ = trackNum;
   }
   void setVolume(const int& volume) {
-    volume_ = volume;
+    if(volume && volume_ != volume)
+      volume_ = volume;
   }
 };
 
@@ -131,21 +144,33 @@ private:
   std::string mediaId_;
   std::string appId_;
   std::string playStatus_;
+  std::string muteStatus_;
+  std::string playPosition_;
   mediaMetaData objMetaData_;
 public:
   mediaSession() :
     mediaId_(CSTR_EMPTY),
     appId_(CSTR_EMPTY),
-    playStatus_(CSTR_EMPTY) {}
+    playStatus_("PLAYSTATE_NONE"),
+    muteStatus_("unmute"),
+    playPosition_(CSTR_EMPTY){}
   mediaSession(const std::string& mediaId, const std::string& appId) :
     mediaId_(mediaId),
     appId_(appId),
-    playStatus_(CSTR_EMPTY) {}
+    playStatus_("PLAYSTATE_NONE"),
+    muteStatus_("unmute"),
+    playPosition_(CSTR_EMPTY){}
 
   std::string getMediaId() const { return mediaId_; }
   std::string getAppId() const { return appId_; }
   std::string getPlayStatus() const {
     return playStatus_;
+  }
+  std::string getMuteStatus() const {
+    return muteStatus_;
+  }
+  std::string getPlayposition() const {
+    return playPosition_;
   }
   mediaMetaData getMediaMetaDataObj() const { return objMetaData_; }
 
@@ -157,6 +182,12 @@ public:
   }
   void setPlayStatus(const std::string& playStatus) {
     playStatus_ = playStatus;
+  }
+  void setMuteStatus(const std::string& muteStatus) {
+    muteStatus_ = muteStatus;
+  }
+  void setPlayposition(const std::string& playPosition) {
+    playPosition_ = playPosition;
   }
   void setMetaData(const mediaMetaData& objMetaData) {
     objMetaData_.setTitle(objMetaData.getTitle());
@@ -201,6 +232,10 @@ static std::string getErrorTextFromErrorCode(const int& errorCode) {
       return CSTR_SESSION_ALREADY_REGISTERED;
     case MCS_ERROR_SESSION_INVALID_PLAY_STATE:
       return CSTR_SESSION_INVALID_PLAY_STATE;
+    case MCS_ERROR_SUBSCRIPTION_FAILED:
+      return CSTR_SUBSCRIPTION_FAILED;
+    case MCS_ERROR_SUBSCRIPTION_REPLY_FAILED:
+      return CSTR_SUBSCRIPTION_REPLY_FAILED;
     default:
       return CSTR_EMPTY;
   }
