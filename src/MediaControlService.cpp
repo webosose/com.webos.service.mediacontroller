@@ -29,9 +29,11 @@ const std::string cstrBTDeviceGetStatus = "luna://com.webos.service.bluetooth2/d
 const std::string cstrBTAvrcpGetStatus = "luna://com.webos.service.bluetooth2/avrcp/getStatus";
 const std::string cstrBTAvrcpReceivePassThroughCommand = "luna://com.webos.service.bluetooth2/avrcp/receivePassThroughCommand";
 const std::string cstrSubscribe = "{\"subscribe\":true}";
+const std::string cstrBTNotifyMediaPlayStatus = "luna://com.webos.service.bluetooth2/avrcp/notifyMediaPlayStatus";
 
 std::string defaultAdapterAddress_;
 std::string secondAdapterAddress_;
+bool BTConnected_ = false;
 
 MediaControlService::MediaControlService()
   : LS::Handle(LS::registerService(cstrMediaControlService.c_str())),
@@ -260,15 +262,19 @@ bool MediaControlService::onBTAvrcpGetStatusCb(LSHandle *lshandle, LSMessage *me
     msg.get("adapterAddress", adapterAddress);
     PMLOG_INFO(CONST_MODULE_MCS, "%s Device MAC address %s Connection Status %d adapter address %s",\
                                   __FUNCTION__, address.c_str(), connected, adapterAddress.c_str());
+    BTConnected_ = connected;
     if (connected) {
       //subscribe to bt key events
       MediaControlService *obj = static_cast<MediaControlService *>(ctx);
       if(obj) {
-        BTDeviceInfo getObjBTDevInfo;
-        getObjBTDevInfo = obj->ptrMediaControlPrivate_->getBTDeviceInfo();
+        if(!(obj->ptrMediaControlPrivate_->isDeviceRegistered(address, adapterAddress))) {
+          int displayId = (defaultAdapterAddress_ == adapterAddress) ? 0 : 1;
+#if defined(PLATFORM_RASPBERRYPI4)
+          displayId = 0;
+#endif
+          BTDeviceInfo objDevInfo(address, adapterAddress, displayId);
+          PMLOG_ERROR(CONST_MODULE_MCS, "%s Device MAC address field not found", __FUNCTION__);
 
-        if(getObjBTDevInfo.deviceAddress_ != address && getObjBTDevInfo.adapterAddress_ != adapterAddress) {
-          BTDeviceInfo objDevInfo(address, adapterAddress);
           //save the details of BT device connected
           obj->ptrMediaControlPrivate_->setBTDeviceInfo(objDevInfo);
 
@@ -878,6 +884,61 @@ bool MediaControlService::setMediaPlayStatus(LSMessage& message) {
 
   if(MCS_ERROR_NO_ERROR == errorCode){
     response = createJsonReplyString(true);
+
+    PMLOG_INFO(CONST_MODULE_MCS, "%s BTConnected_ value  = [%d]", __FUNCTION__, BTConnected_);
+    /*The below code under if() condition will be removed once BT service will subscribe to MCS API 
+      for recieving the mediaPlayback status information. This is a temporary fix, until BT 
+      service implements the subscription call */
+    if(BTConnected_) {
+      std::string sendPlaybackStatus;
+
+      if(playStatus == "PLAYSTATE_STOPPED")
+        sendPlaybackStatus = "stopped";
+      else if(playStatus == "PLAYSTATE_PAUSED")
+        sendPlaybackStatus = "paused";
+      else if(playStatus == "PLAYSTATE_PLAYING")
+        sendPlaybackStatus = "playing";
+      else if(playStatus == "PLAYSTATE_FAST_FORWARDING")
+        sendPlaybackStatus = "fwd_seek";
+      else if(playStatus == "PLAYSTATE_REWINDING")
+        sendPlaybackStatus = "rev_seek";
+      else if(playStatus == "PLAYSTATE_ERROR")
+        sendPlaybackStatus = "error";
+      else
+        PMLOG_INFO(CONST_MODULE_MCS, "%s Invalid PlaybackStatus", __FUNCTION__);
+
+      int displayIdForMedia = ptrMediaSessionMgr_->getDisplayIdForMedia(mediaId);
+#if defined(PLATFORM_RASPBERRYPI4)
+      displayIdForMedia = 0;
+#endif
+      BTDeviceInfo objDevInfo;
+      if(ptrMediaControlPrivate_->getBTDeviceInfo(displayIdForMedia, &objDevInfo)) {
+        std::string adapterAddress;
+        std::string address;
+        adapterAddress = objDevInfo.adapterAddress_;
+        address = objDevInfo.deviceAddress_;
+        CLSError lserror;
+
+        PMLOG_INFO(CONST_MODULE_MCS, "%s adapterAddress = %s, address = %s sendPlaybackStatus = %s",
+                                   __FUNCTION__, adapterAddress.c_str(), address.c_str(), sendPlaybackStatus.c_str());
+
+        pbnjson::JObject playStatusObj;
+        playStatusObj.put("duration",0);
+        playStatusObj.put("position",0);
+        playStatusObj.put("status",sendPlaybackStatus);
+
+        pbnjson::JObject responseObj;
+        responseObj.put("adapterAddress", adapterAddress);
+        responseObj.put("address", address);
+        responseObj.put("playbackStatus", playStatusObj);
+        std::string payloadData;
+        payloadData = responseObj.stringify();
+
+        if(!LSCallOneReply(lsHandle_, cstrBTNotifyMediaPlayStatus.c_str(), payloadData.c_str(), NULL, NULL, NULL, &lserror)) {
+          PMLOG_ERROR(CONST_MODULE_MCS,"%s LSCall failed to avrcp/notifyMediaPlayStatus", __FUNCTION__);
+        }
+      }
+    }
 
     if(ptrMediaControlPrivate_->playStatus_){
       /*Get display ID from media ID*/

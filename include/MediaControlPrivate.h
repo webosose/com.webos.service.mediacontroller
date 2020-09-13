@@ -34,7 +34,8 @@ public:
   static MediaControlPrivate &getInstance();
 
   void setBTDeviceInfo(const BTDeviceInfo& objDevInfo);
-  BTDeviceInfo getBTDeviceInfo();
+  bool getBTDeviceInfo(const int& displayId, BTDeviceInfo *objDevInfo);
+  bool isDeviceRegistered(const std::string& address, const std::string& adapterAddress);
   std::string getMediaId(const std::string& deviceAddress);
 
 private:
