@@ -1,0 +1,11 @@
+{
+    "exeName":"@WEBOS_INSTALL_SBINDIR@/com.webos.service.mediacontrollertest",
+    "type": "regular",
+    "allowedNames": ["com.webos.service.mediacontrollertest"],
+    "permissions": [
+        {
+            "service": "com.webos.service.mediacontrollertest",
+            "outbound": ["*"]
+        }
+    ]
+}
