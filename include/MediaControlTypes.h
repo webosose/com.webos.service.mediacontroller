@@ -21,6 +21,7 @@
  (File Inclusions)
  ------------------------------------------------------------------------------*/
 #include <string>
+#include <vector>
 #include "PmLogLib.h"
 
 const std::string CSTR_INVALID_MEDIAID = "Invalid mediaId";
@@ -83,11 +84,6 @@ private:
   int volume_;
 public:
   mediaMetaData() :
-    title_(CSTR_EMPTY),
-    artist_(CSTR_EMPTY),
-    totalDuration_(CSTR_EMPTY),
-    album_(CSTR_EMPTY),
-    genre_(CSTR_EMPTY),
     trackNumber_(0),
     volume_(0) {}
   mediaMetaData(const std::string& title, const std::string& artist,
@@ -149,17 +145,15 @@ private:
   mediaMetaData objMetaData_;
 public:
   mediaSession() :
-    mediaId_(CSTR_EMPTY),
-    appId_(CSTR_EMPTY),
     playStatus_("PLAYSTATE_NONE"),
     muteStatus_("unmute"),
-    playPosition_(CSTR_EMPTY){}
+    playPosition_("0.0"){}
   mediaSession(const std::string& mediaId, const std::string& appId) :
     mediaId_(mediaId),
     appId_(appId),
     playStatus_("PLAYSTATE_NONE"),
     muteStatus_("unmute"),
-    playPosition_(CSTR_EMPTY){}
+    playPosition_("0.0"){}
 
   std::string getMediaId() const { return mediaId_; }
   std::string getAppId() const { return appId_; }
@@ -203,15 +197,14 @@ public:
 struct BTDeviceInfo {
   std::string deviceAddress_;
   std::string adapterAddress_;
-  int displayId_;
-  BTDeviceInfo() :
-    deviceAddress_(CSTR_EMPTY),
-    adapterAddress_(CSTR_EMPTY),
-    displayId_(0) {}
-  BTDeviceInfo(const std::string& address, const std::string &adapterAddress,
-               const int& displayId = 0) :
+  std::string deviceSetId_;
+  int displayId_ = -1;
+  BTDeviceInfo() {}
+  BTDeviceInfo(const std::string& address, const std::string &adapterAddress, std::string deviceSetId,
+               const int& displayId = -1) :
     deviceAddress_(address),
     adapterAddress_(adapterAddress),
+    deviceSetId_(deviceSetId),
     displayId_(displayId)
   {}
 };

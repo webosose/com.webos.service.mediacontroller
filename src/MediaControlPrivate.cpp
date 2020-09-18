@@ -69,3 +69,31 @@ std::string MediaControlPrivate::getMediaId(const std::string& deviceAddress) {
   }
   return mediaId;
 }
+
+void MediaControlPrivate::setSessionListInfo(const BTDeviceInfo& btInfo) {
+  PMLOG_INFO(CONST_MODULE_MCP, "%s ", __FUNCTION__);
+  //add deviceSetId and displayId info to the vector
+  btAdapterInfo_.push_back(btInfo);
+}
+
+void MediaControlPrivate::setBTAdapterInfo(const std::string& deviceSetId, const std::string& adapterAddress) {
+  PMLOG_INFO(CONST_MODULE_MCP, " %s ", __FUNCTION__);
+  //add adapter address info to the vector
+  std::vector<BTDeviceInfo>::iterator it;
+  for (it = btAdapterInfo_.begin(); it != btAdapterInfo_.end(); it++) {
+    if (it->deviceSetId_ == deviceSetId) {
+      it->adapterAddress_ = adapterAddress;
+      break;
+    }
+  }
+}
+
+int MediaControlPrivate::getDisplayIdForBT(const std::string& adapterAddress) {
+  PMLOG_INFO(CONST_MODULE_MCP, " %s ", __FUNCTION__);
+  for(const auto& itr : btAdapterInfo_) {
+    if(itr.adapterAddress_ == adapterAddress) {
+      return itr.displayId_;
+    }
+  }
+  return -1;
+}

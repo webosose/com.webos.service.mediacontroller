@@ -30,9 +30,8 @@ const std::string cstrBTAvrcpGetStatus = "luna://com.webos.service.bluetooth2/av
 const std::string cstrBTAvrcpReceivePassThroughCommand = "luna://com.webos.service.bluetooth2/avrcp/receivePassThroughCommand";
 const std::string cstrSubscribe = "{\"subscribe\":true}";
 const std::string cstrBTNotifyMediaPlayStatus = "luna://com.webos.service.bluetooth2/avrcp/notifyMediaPlayStatus";
+const std::string cstrGetSessionList = "luna://com.webos.service.sessionmanager/getSessionList";
 
-std::string defaultAdapterAddress_;
-std::string secondAdapterAddress_;
 bool BTConnected_ = false;
 
 MediaControlService::MediaControlService()
@@ -90,6 +89,16 @@ bool MediaControlService::onBTServerStatusCb(LSHandle *lshandle, LSMessage *mess
       // get BT to get connected devices
       ptrService->subscribeToBTAdapterGetStatus();
     }
+#if defined(PLATFORM_SA8155)
+        std::string payloadData = "{\"subscribed\":true}";
+        CLSError lserrorno;
+        if (!LSCall(ptrService->lsHandle_,
+                    cstrGetSessionList.c_str(),
+                    payloadData.c_str(),
+                    &MediaControlService::onGetSessionListInfoCb,
+                    ctx, NULL, &lserrorno))
+          PMLOG_ERROR(CONST_MODULE_MCS,"%s LSCall failed to onGetSessionListInfoCb", __FUNCTION__);
+#endif
   }
   return true;
 }
@@ -118,6 +127,7 @@ bool MediaControlService::onBTAdapterQueryCb(LSHandle *lshandle, LSMessage *mess
   bool returnValue = false;
   msg.get("returnValue", returnValue);
   if (returnValue) {
+    std::string deviceSetId;
     pbnjson::JValue adapterStatus = msg.get();
     pbnjson::JValue adapters = adapterStatus["adapters"];
     if (!adapters.isArray()) {
@@ -131,53 +141,49 @@ bool MediaControlService::onBTAdapterQueryCb(LSHandle *lshandle, LSMessage *mess
     }
 
     CLSError lserror;
+    MediaControlService *obj = static_cast<MediaControlService *>(ctx);
     for (int i = 0; i < adapters.arraySize(); i++) {
       std::string adapterName = adapters[i]["name"].asString();
       std::string adapterAddress = adapters[i]["adapterAddress"].asString();
       PMLOG_INFO(CONST_MODULE_MCS,"%s : adapterName : %s, adapterAddress : %s",
                                    __FUNCTION__, adapterName.c_str(), adapterAddress.c_str());
-      #if defined(PLATFORM_RASPBERRYPI4)
+
+#if defined(PLATFORM_RASPBERRYPI4)
       if(("raspberrypi4 #2" == adapterName) || ("raspberrypi4" == adapterName)) {
-      #elif defined(PLATFORM_SA8155)
+#elif defined(PLATFORM_SA8155)
       if ("sa8155 Bluetooth hci0" == adapterName) {
-      #endif
-        if (defaultAdapterAddress_ != adapterAddress) {
-          defaultAdapterAddress_ = adapterAddress;
-          std::string payload = "{\"adapterAddress\":\"" + adapterAddress + "\",\"subscribe\":true}";
-          PMLOG_INFO(CONST_MODULE_MCS,"%s : payload = %s for first adapter",__FUNCTION__, payload.c_str());
-          MediaControlService *obj = static_cast<MediaControlService *>(ctx);
-          if(obj) {
-            if (!LSCall(obj->lsHandle_,
-                        cstrBTDeviceGetStatus.c_str(),
-                        payload.c_str(),
-                        &MediaControlService::onBTDeviceGetStatusCb,
-                        ctx, NULL, &lserror))
-              PMLOG_ERROR(CONST_MODULE_MCS,"%s : LSCall failed for BT device/getStatus", __FUNCTION__);
-          }
+#endif
+        deviceSetId = "RSE-L";
+        std::string payload = "{\"adapterAddress\":\"" + adapterAddress + "\",\"subscribe\":true}";
+        PMLOG_INFO(CONST_MODULE_MCS,"%s : payload = %s for first adapter",__FUNCTION__, payload.c_str());
+        if(obj) {
+          if (!LSCall(obj->lsHandle_,
+                      cstrBTDeviceGetStatus.c_str(),
+                      payload.c_str(),
+                      &MediaControlService::onBTDeviceGetStatusCb,
+                      ctx, NULL, &lserror))
+            PMLOG_ERROR(CONST_MODULE_MCS,"%s : LSCall failed for BT device/getStatus", __FUNCTION__);
         }
-        else
-          PMLOG_ERROR(CONST_MODULE_MCS,"%s: Already subscribe for adapter: %s", __FUNCTION__, adapterAddress.c_str());
       }
       else if ("sa8155 Bluetooth hci1" == adapterName) {
-        if (secondAdapterAddress_ != adapterAddress) {
-          secondAdapterAddress_ = adapterAddress;
-          std::string payload = "{\"adapterAddress\":\"" + adapterAddress + "\",\"subscribe\":true}";
-          PMLOG_INFO(CONST_MODULE_MCS,"%s : payload = %s for second adapter",__FUNCTION__, payload.c_str());
-          MediaControlService *obj = static_cast<MediaControlService *>(ctx);
-          if(obj) {
-            if (!LSCall(obj->lsHandle_,
-                        cstrBTDeviceGetStatus.c_str(),
-                        payload.c_str(),
-                        &MediaControlService::onBTDeviceGetStatusCb,
-                        ctx, NULL, &lserror))
-              PMLOG_ERROR(CONST_MODULE_MCS,"%s : LSCall failed for BT device/getStatus", __FUNCTION__);
-          }
+        deviceSetId = "RSE-R";
+        std::string payload = "{\"adapterAddress\":\"" + adapterAddress + "\",\"subscribe\":true}";
+        PMLOG_INFO(CONST_MODULE_MCS,"%s : payload = %s for second adapter",__FUNCTION__, payload.c_str());
+        if(obj) {
+          if (!LSCall(obj->lsHandle_,
+                      cstrBTDeviceGetStatus.c_str(),
+                      payload.c_str(),
+                      &MediaControlService::onBTDeviceGetStatusCb,
+                      ctx, NULL, &lserror))
+            PMLOG_ERROR(CONST_MODULE_MCS,"%s : LSCall failed for BT device/getStatus", __FUNCTION__);
         }
-        else
-          PMLOG_ERROR("%s: Already subscribe for adapter: %s", __FUNCTION__, adapterAddress.c_str());
       }
       else
-        PMLOG_ERROR("%s: Already subscribe for adapter: %s", __FUNCTION__, adapterAddress.c_str());
+        PMLOG_ERROR(CONST_MODULE_MCS,"%s: Already subscribe for adapter: %s", __FUNCTION__, adapterAddress.c_str());
+
+    PMLOG_INFO(CONST_MODULE_MCS,"%s : adapterAddress = %s deviceSetId = %s [%d]",__FUNCTION__, adapterAddress.c_str(), deviceSetId.c_str(), __LINE__);
+    if (obj && !deviceSetId.empty() && !adapterAddress.empty())
+      obj->ptrMediaControlPrivate_->setBTAdapterInfo(deviceSetId, adapterAddress);
     }
   }
   return true;
@@ -267,12 +273,13 @@ bool MediaControlService::onBTAvrcpGetStatusCb(LSHandle *lshandle, LSMessage *me
       //subscribe to bt key events
       MediaControlService *obj = static_cast<MediaControlService *>(ctx);
       if(obj) {
+
         if(!(obj->ptrMediaControlPrivate_->isDeviceRegistered(address, adapterAddress))) {
-          int displayId = (defaultAdapterAddress_ == adapterAddress) ? 0 : 1;
+          int displayId = obj->ptrMediaControlPrivate_->getDisplayIdForBT(adapterAddress);
 #if defined(PLATFORM_RASPBERRYPI4)
           displayId = 0;
 #endif
-          BTDeviceInfo objDevInfo(address, adapterAddress, displayId);
+          BTDeviceInfo objDevInfo(address, adapterAddress, "", displayId);
           PMLOG_ERROR(CONST_MODULE_MCS, "%s Device MAC address field not found", __FUNCTION__);
 
           //save the details of BT device connected
@@ -291,6 +298,37 @@ bool MediaControlService::onBTAvrcpGetStatusCb(LSHandle *lshandle, LSMessage *me
       }
     }
   }
+  return true;
+}
+
+bool MediaControlService::onGetSessionListInfoCb(LSHandle *lshandle, LSMessage *message, void *ctx) {
+  PMLOG_INFO(CONST_MODULE_MCS, "%s ", __FUNCTION__);
+  LSMessageJsonParser msg(message, SCHEMA_ANY);
+  if (!msg.parse(__func__))
+        return false;
+  bool returnValue = false;
+  msg.get("returnValue", returnValue);
+  if (returnValue) {
+    pbnjson::JValue payload = msg.get();
+    pbnjson::JValue sessionInfo = payload["sessionList"];
+    if (!sessionInfo.isArray()) {
+      PMLOG_ERROR(CONST_MODULE_MCS,"%s LSCall failed to onGetSessionListInfoCb", __FUNCTION__);
+      return false;
+    } else {
+        MediaControlService *obj = static_cast<MediaControlService *>(ctx);
+        for (const auto& items : sessionInfo.items()) {
+          if (items.hasKey("deviceSetInfo")) {
+            int displayId;
+            std::string deviceSetId;
+            pbnjson::JValue deviceSetInfo = items["deviceSetInfo"];
+            displayId = deviceSetInfo["displayId"].asNumber<int>();
+            deviceSetId = deviceSetInfo["deviceSetId"].asString();
+            BTDeviceInfo btInfo("", "", deviceSetId, displayId);
+            obj->ptrMediaControlPrivate_->setSessionListInfo(btInfo);
+          }
+        }
+      }
+    }
   return true;
 }
 
@@ -324,7 +362,7 @@ bool MediaControlService::onBTAvrcpKeyEventsCb(LSHandle *lshandle, LSMessage *me
       MediaControlService *obj = static_cast<MediaControlService *>(ctx);
       if(obj) {
         //get latest client from media session manager
-        int displayIdForBT = (defaultAdapterAddress_ == adapterAddress) ? 0 : 1;
+        int displayIdForBT = obj->ptrMediaControlPrivate_->getDisplayIdForBT(adapterAddress);
         std::string mediaId = obj->ptrMediaControlPrivate_->getMediaId(address);
         int displayIdForMedia = obj->ptrMediaSessionMgr_->getDisplayIdForMedia(mediaId);
         //ToDo : Below platform check to be removed once multi intsnace support available in chromium for OSE
@@ -918,9 +956,8 @@ bool MediaControlService::setMediaPlayStatus(LSMessage& message) {
         adapterAddress = objDevInfo.adapterAddress_;
         address = objDevInfo.deviceAddress_;
         CLSError lserror;
-
-        PMLOG_INFO(CONST_MODULE_MCS, "%s adapterAddress = %s, address = %s sendPlaybackStatus = %s",
-                                   __FUNCTION__, adapterAddress.c_str(), address.c_str(), sendPlaybackStatus.c_str());
+        PMLOG_INFO(CONST_MODULE_MCS, "%s displayId = %d adapterAddress = %s, address = %s sendPlaybackStatus = %s",
+                                   __FUNCTION__,displayIdForMedia, adapterAddress.c_str(), address.c_str(), sendPlaybackStatus.c_str());
 
         pbnjson::JObject playStatusObj;
         playStatusObj.put("duration",0);

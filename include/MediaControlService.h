@@ -61,6 +61,7 @@ public:
   static bool onBTDeviceGetStatusCb(LSHandle *lshandle, LSMessage *message, void *ctx);
   static bool onBTAvrcpGetStatusCb(LSHandle *lshandle, LSMessage *message, void *ctx);
   static bool onBTAvrcpKeyEventsCb(LSHandle *lshandle, LSMessage *message, void *ctx);
+  static bool onGetSessionListInfoCb(LSHandle *lshandle, LSMessage *message, void *ctx);
   int updateMetaDataResponse(const std::string &,  pbnjson::JObject &);
 
 private:
