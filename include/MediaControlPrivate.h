@@ -37,10 +37,14 @@ public:
   bool getBTDeviceInfo(const int& displayId, BTDeviceInfo *objDevInfo);
   bool isDeviceRegistered(const std::string& address, const std::string& adapterAddress);
   std::string getMediaId(const std::string& deviceAddress);
+  void setSessionListInfo(const BTDeviceInfo& btInfo);
+  void setBTAdapterInfo(const std::string& deviceSetId, const std::string& adapterAddress);
+  int getDisplayIdForBT(const std::string& adapterAddress);
 
 private:
   MediaControlPrivate();
   std::map<std::string, BTDeviceInfo> mapDeviceInfo_;
+  std::vector<BTDeviceInfo> btAdapterInfo_;
 };
 
 #endif /*MEDIA_CONTROL_SERVICE_H_*/

@@ -28,10 +28,12 @@ struct AutoLSError : LSError {
 };
 
 int displayId = 0;
-std::string muteStatus[2];
-std::string playStatus[2];
-std::string playPosition[2];
-std::string mediaMetaData[2];
+std::string muteStatus[3];
+std::string playStatus[3];
+std::string playPosition[3];
+std::string mediaMetaData[3];
+std::string AVNDeviceType = "AVN";
+bool isAvn = false;
 LSHandle *gHandle = nullptr;
 
 bool metaDataResponse(LSHandle* sh, LSMessage* reply, void* ctx) {
@@ -56,6 +58,15 @@ bool metaDataResponse(LSHandle* sh, LSMessage* reply, void* ctx) {
   return true;
 }
 
+bool SessionListResponse(LSHandle* sh, LSMessage* reply, void* ctx) {
+  LSMessageRef(reply);
+  std::string payload_message = LSMessageGetPayload(reply);
+  size_t found = payload_message.find(AVNDeviceType);
+    if (found != std::string::npos)
+      isAvn = true;
+    return true;
+}
+
 MCSClient::MCSClient()
 {
   std::string serviceName = "com.webos.service.mediacontrollertest";
@@ -72,6 +83,25 @@ MCSClient::~MCSClient() {
   g_main_context_unref(context);
 }
 
+void runSessionSubscriptionThread() {
+  GMainLoop* mainLoop = g_main_loop_new(nullptr, false);
+  LSError lserror;
+  if(!LSGmainAttach(gHandle, mainLoop, &lserror)) {
+    std::cout << "Unable to attach to service" << std::endl;
+    return;
+  }
+  std::string subscriptionUri = "luna://com.webos.service.sessionmanager/getSessionList";
+  std::string payloadData = "{\"subscribed\":true}";
+  LSError error;
+  if(!LSCall(gHandle, subscriptionUri.c_str(), payloadData.c_str(), SessionListResponse, NULL, NULL, &error)) {
+    std::cout << "LSCall error for getSessionList" << std::endl;
+  }
+
+  g_main_loop_run(mainLoop);
+  g_main_loop_unref(mainLoop);
+  mainLoop = nullptr;
+}
+
 void runSubscriptionThread() {
   GMainLoop* mainLoop = g_main_loop_new(nullptr, false);
   LSError lserror;
@@ -80,8 +110,16 @@ void runSubscriptionThread() {
     return;
   }
   std::string subscriptionUri = "luna://com.webos.service.mediacontroller/receiveMediaPlaybackInfo";
-  std::string payloadUri0 = "{\"displayId\":0,\"subscribe\":true}";
-  std::string payloadUri1 = "{\"displayId\":1,\"subscribe\":true}";
+  std::string payloadUri0;
+  std::string payloadUri1;
+  if(isAvn) {
+    payloadUri0 = "{\"displayId\":1,\"subscribe\":true}";
+    payloadUri1 = "{\"displayId\":2,\"subscribe\":true}";
+  } else {
+    payloadUri0 = "{\"displayId\":0,\"subscribe\":true}";
+    payloadUri1 = "{\"displayId\":1,\"subscribe\":true}";
+  }
+
   LSError error;
   if(!LSCall(gHandle, subscriptionUri.c_str(), payloadUri0.c_str(), metaDataResponse, NULL, NULL, &error)) {
     std::cout << "LSCall error for receiveMediaPlaybackInfo" << std::endl;
@@ -117,6 +155,7 @@ void runMainMenuThread() {
       case 1:
       {
         bool flagMainMenu = true;
+        input = isAvn ? (input + 1) : input;
         while(flagMainMenu) {
           std::cout << "Select widget event : " << std::endl;
           std::cout << "1. Play" << std::endl;
@@ -216,10 +255,16 @@ int main(int argc, char ** argv) {
   MCSClient obj;
   gHandle = obj.getHandle();
 
-  std::thread runThread1(runSubscriptionThread);
-  std::thread runThread2(runMainMenuThread);
+#if defined(PLATFORM_SA8155)
+  std::thread runThread1(runSessionSubscriptionThread);
+#endif
+  std::thread runThread2(runSubscriptionThread);
+  std::thread runThread3(runMainMenuThread);
+#if defined(PLATFORM_SA8155)
   runThread1.join();
+#endif
   runThread2.join();
+  runThread3.join();
 
   return 0;
 }

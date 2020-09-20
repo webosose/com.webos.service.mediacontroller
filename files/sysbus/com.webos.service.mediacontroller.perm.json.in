@@ -1,7 +1,8 @@
 {
     "com.webos.service.mediacontroller": [
         "devices",
-        "bluetooth.manage"
+        "bluetooth.manage",
+        "session.management"
     ]
 }
 

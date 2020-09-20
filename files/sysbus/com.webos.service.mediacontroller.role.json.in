@@ -5,7 +5,8 @@
     "permissions": [
         {
             "service": "com.webos.service.mediacontroller",
-            "outbound": ["com.webos.service.bluetooth2"]
+            "outbound": ["com.webos.service.bluetooth2",
+                         "com.webos.service.sessionmanager"]
         }
     ]
 }
