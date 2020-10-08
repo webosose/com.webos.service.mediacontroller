@@ -88,7 +88,7 @@ bool MediaControlService::onBTServerStatusCb(LSHandle *lshandle, LSMessage *mess
     if(ptrService) {
       // get BT to get connected devices
       ptrService->subscribeToBTAdapterGetStatus();
-    }
+
 #if defined(PLATFORM_SA8155)
         std::string payloadData = "{\"subscribed\":true}";
         CLSError lserrorno;
@@ -99,6 +99,7 @@ bool MediaControlService::onBTServerStatusCb(LSHandle *lshandle, LSMessage *mess
                     ctx, NULL, &lserrorno))
           PMLOG_ERROR(CONST_MODULE_MCS,"%s LSCall failed to onGetSessionListInfoCb", __FUNCTION__);
 #endif
+    }
   }
   return true;
 }
@@ -924,8 +925,8 @@ bool MediaControlService::setMediaPlayStatus(LSMessage& message) {
     response = createJsonReplyString(true);
 
     PMLOG_INFO(CONST_MODULE_MCS, "%s BTConnected_ value  = [%d]", __FUNCTION__, BTConnected_);
-    /*The below code under if() condition will be removed once BT service will subscribe to MCS API 
-      for recieving the mediaPlayback status information. This is a temporary fix, until BT 
+    /*The below code under if() condition will be removed once BT service will subscribe to MCS API
+      for recieving the mediaPlayback status information. This is a temporary fix, until BT
       service implements the subscription call */
     if(BTConnected_) {
       std::string sendPlaybackStatus;

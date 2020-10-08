@@ -47,7 +47,7 @@ bool metaDataResponse(LSHandle* sh, LSMessage* reply, void* ctx) {
     displayId = payload["displayId"].asNumber<int>();
     if((payload["playStatus"].asString() != "") && playStatus[displayId] != payload["playStatus"].asString())
       playStatus[displayId] = payload["playStatus"].asString();
-    if((payload["muteStatus"].asString() != "") && playStatus[displayId] != payload["muteStatus"].asString())
+    if((payload["muteStatus"].asString() != "") && muteStatus[displayId] != payload["muteStatus"].asString())
       muteStatus[displayId] = payload["muteStatus"].asString();
     if(payload["playPosition"].asString() != "")
       playPosition[displayId] = payload["playPosition"].asString();
@@ -71,6 +71,7 @@ MCSClient::MCSClient()
 {
   std::string serviceName = "com.webos.service.mediacontrollertest";
   AutoLSError error;
+  context = nullptr;
   if(LSRegister(serviceName.c_str(), &handle, &error)) {
     context = g_main_context_ref(g_main_context_default());
     LSGmainContextAttach(handle, context, &error);
@@ -186,7 +187,6 @@ void runMainMenuThread() {
               else if(userChoice == 4) eventCmd = "unmute";
               else if(userChoice == 5) eventCmd = "next";
               else if(userChoice == 6) eventCmd = "previous";
-              else std::cout << "Not valid command" << std::endl;
               std::string uri = "luna-send -n 1 -f luna://com.webos.service.mediacontroller/injectMediaKeyEvent ";
               std::string payload = "'{\"displayId\":" + std::to_string(input) + ",\"keyEvent\":\"" + eventCmd + "\"}'";
               std::string cmd = uri + payload;
@@ -198,8 +198,9 @@ void runMainMenuThread() {
             {
              while(1) {
                 std::cout << "position : " << playPosition[input] << std::endl;
-                char ch = std::cin.get();
-                if(ch == 27) break;
+                char ch;
+                if((ch = std::cin.get()) == 27)
+                  break;
               }
              std::cout << "" << std::endl;
              break;
