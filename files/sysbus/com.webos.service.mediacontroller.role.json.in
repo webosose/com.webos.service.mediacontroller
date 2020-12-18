@@ -1,6 +1,7 @@
 {
     "exeName":"@WEBOS_INSTALL_SBINDIR@/com.webos.service.mediacontroller",
     "type": "regular",
+    "trustLevel" : "oem",
     "allowedNames": ["com.webos.service.mediacontroller"],
     "permissions": [
         {

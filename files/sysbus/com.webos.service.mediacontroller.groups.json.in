@@ -1,0 +1,6 @@
+{
+    "allowedNames" : ["com.webos.service.mediacontroller"],
+    "mediacontroller.operation": ["dev"],
+    "mediacontroller.query": ["oem"],
+    "mediacontroller.management": ["oem"]
+}
