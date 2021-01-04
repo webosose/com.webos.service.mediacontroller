@@ -261,6 +261,9 @@ std::string MediaSessionManager::getMediaIdFromDisplayId(const int& displayId) {
   for (const auto& itr : mapMediaSessionInfo_) {
     std::string appId = itr.second.getAppId();
     int appDisplayId = (appId.back()-48);
+#if defined(PLATFORM_RASPBERRYPI4)
+    appDisplayId = 0;
+#endif
     if(appDisplayId == displayId){
       std::string mediaId = objRequestRcvr_.getLastActiveClient();
       return mediaId;
