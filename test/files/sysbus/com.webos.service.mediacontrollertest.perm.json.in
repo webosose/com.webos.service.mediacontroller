@@ -1,6 +1,6 @@
 {
     "com.webos.service.mediacontroller*": [
         "mediacontroller.management",
-        "session.management"
+        "account.query"
     ]
 }

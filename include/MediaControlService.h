@@ -1,4 +1,4 @@
-// Copyright (c) 2020 LG Electronics, Inc.
+// Copyright (c) 2020-2021 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -61,7 +61,7 @@ public:
   static bool onBTDeviceGetStatusCb(LSHandle *lshandle, LSMessage *message, void *ctx);
   static bool onBTAvrcpGetStatusCb(LSHandle *lshandle, LSMessage *message, void *ctx);
   static bool onBTAvrcpKeyEventsCb(LSHandle *lshandle, LSMessage *message, void *ctx);
-  static bool onGetSessionListInfoCb(LSHandle *lshandle, LSMessage *message, void *ctx);
+  static bool onGetSessionsInfoCb(LSHandle *lshandle, LSMessage *message, void *ctx);
   int updateMetaDataResponse(const std::string &,  pbnjson::JObject &);
 
 private:
