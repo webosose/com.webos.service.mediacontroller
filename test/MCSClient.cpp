@@ -1,4 +1,4 @@
-// Copyright (c) 2020 LG Electronics, Inc.
+// Copyright (c) 2020-2021 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -58,7 +58,7 @@ bool metaDataResponse(LSHandle* sh, LSMessage* reply, void* ctx) {
   return true;
 }
 
-bool SessionListResponse(LSHandle* sh, LSMessage* reply, void* ctx) {
+bool SessionsResponse(LSHandle* sh, LSMessage* reply, void* ctx) {
   LSMessageRef(reply);
   std::string payload_message = LSMessageGetPayload(reply);
   size_t found = payload_message.find(AVNDeviceType);
@@ -91,10 +91,10 @@ void runSessionSubscriptionThread() {
     std::cout << "Unable to attach to service" << std::endl;
     return;
   }
-  std::string subscriptionUri = "luna://com.webos.service.sessionmanager/getSessionList";
+  std::string subscriptionUri = "luna://com.webos.service.account/getSessions";
   std::string payloadData = "{\"subscribed\":true}";
   LSError error;
-  if(!LSCall(gHandle, subscriptionUri.c_str(), payloadData.c_str(), SessionListResponse, NULL, NULL, &error)) {
+  if(!LSCall(gHandle, subscriptionUri.c_str(), payloadData.c_str(), SessionsResponse, NULL, NULL, &error)) {
     std::cout << "LSCall error for getSessionList" << std::endl;
   }
 

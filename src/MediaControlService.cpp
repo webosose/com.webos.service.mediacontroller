@@ -1,4 +1,4 @@
-// Copyright (c) 2020 LG Electronics, Inc.
+// Copyright (c) 2020-2021 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ const std::string cstrBTAvrcpGetStatus = "luna://com.webos.service.bluetooth2/av
 const std::string cstrBTAvrcpReceivePassThroughCommand = "luna://com.webos.service.bluetooth2/avrcp/receivePassThroughCommand";
 const std::string cstrSubscribe = "{\"subscribe\":true}";
 const std::string cstrBTNotifyMediaPlayStatus = "luna://com.webos.service.bluetooth2/avrcp/notifyMediaPlayStatus";
-const std::string cstrGetSessionList = "luna://com.webos.service.sessionmanager/getSessionList";
+const std::string cstrGetSessions = "luna://com.webos.service.account/getSessions";
 
 bool BTConnected_ = false;
 
@@ -90,14 +90,14 @@ bool MediaControlService::onBTServerStatusCb(LSHandle *lshandle, LSMessage *mess
       ptrService->subscribeToBTAdapterGetStatus();
 
 #if defined(PLATFORM_SA8155)
-        std::string payloadData = "{\"subscribed\":true}";
+        std::string payloadData = "{\"subscribe\":true}";
         CLSError lserrorno;
         if (!LSCall(ptrService->lsHandle_,
-                    cstrGetSessionList.c_str(),
+                    cstrGetSessions.c_str(),
                     payloadData.c_str(),
-                    &MediaControlService::onGetSessionListInfoCb,
+                    &MediaControlService::onGetSessionsInfoCb,
                     ctx, NULL, &lserrorno))
-          PMLOG_ERROR(CONST_MODULE_MCS,"%s LSCall failed to onGetSessionListInfoCb", __FUNCTION__);
+          PMLOG_ERROR(CONST_MODULE_MCS,"%s LSCall failed to onGetSessionsInfoCb", __FUNCTION__);
 #endif
     }
   }
@@ -302,7 +302,7 @@ bool MediaControlService::onBTAvrcpGetStatusCb(LSHandle *lshandle, LSMessage *me
   return true;
 }
 
-bool MediaControlService::onGetSessionListInfoCb(LSHandle *lshandle, LSMessage *message, void *ctx) {
+bool MediaControlService::onGetSessionsInfoCb(LSHandle *lshandle, LSMessage *message, void *ctx) {
   PMLOG_INFO(CONST_MODULE_MCS, "%s ", __FUNCTION__);
   LSMessageJsonParser msg(message, SCHEMA_ANY);
   if (!msg.parse(__func__))
@@ -311,9 +311,9 @@ bool MediaControlService::onGetSessionListInfoCb(LSHandle *lshandle, LSMessage *
   msg.get("returnValue", returnValue);
   if (returnValue) {
     pbnjson::JValue payload = msg.get();
-    pbnjson::JValue sessionInfo = payload["sessionList"];
+    pbnjson::JValue sessionInfo = payload["sessions"];
     if (!sessionInfo.isArray()) {
-      PMLOG_ERROR(CONST_MODULE_MCS,"%s LSCall failed to onGetSessionListInfoCb", __FUNCTION__);
+      PMLOG_ERROR(CONST_MODULE_MCS,"%s LSCall failed to onGetSessionsInfoCb", __FUNCTION__);
       return false;
     } else {
         MediaControlService *obj = static_cast<MediaControlService *>(ctx);
