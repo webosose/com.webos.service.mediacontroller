@@ -92,7 +92,7 @@ void runSessionSubscriptionThread() {
     return;
   }
   std::string subscriptionUri = "luna://com.webos.service.account/getSessions";
-  std::string payloadData = "{\"subscribed\":true}";
+  std::string payloadData = "{\"subscribe\":true}";
   LSError error;
   if(!LSCall(gHandle, subscriptionUri.c_str(), payloadData.c_str(), SessionsResponse, NULL, NULL, &error)) {
     std::cout << "LSCall error for getSessionList" << std::endl;
