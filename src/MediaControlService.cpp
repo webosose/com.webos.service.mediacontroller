@@ -150,7 +150,8 @@ bool MediaControlService::onBTAdapterQueryCb(LSHandle *lshandle, LSMessage *mess
                                    __FUNCTION__, adapterName.c_str(), adapterAddress.c_str());
 
 #if defined(PLATFORM_RASPBERRYPI4)
-      if(("raspberrypi4 #2" == adapterName) || ("raspberrypi4" == adapterName)) {
+      if(("raspberrypi4 #2" == adapterName) || ("raspberrypi4" == adapterName) ||
+         ("raspberrypi4-64 #2" == adapterName) || ("raspberrypi4-64" == adapterName)) {
 #elif defined(PLATFORM_SA8155)
       if ("sa8155 Bluetooth hci0" == adapterName) {
 #endif
