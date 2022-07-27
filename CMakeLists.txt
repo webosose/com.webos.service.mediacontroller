@@ -1,4 +1,4 @@
-# Copyright (c) 2020 LG Electronics, Inc.
+# Copyright (c) 2020-2022 LG Electronics, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -41,11 +41,11 @@ pkg_check_modules(PBNJSON_CPP REQUIRED pbnjson_cpp)
 include_directories(${PBNJSON_CPP_INCLUDE_DIRS})
 webos_add_compiler_flags(ALL ${PBNJSON_CPP_CFLAGS})
 
-if(WEBOS_TARGET_MACHINE STREQUAL "raspberrypi4" OR WEBOS_TARGET_MACHINE STREQUAL "raspberrypi4-64" OR WEBOS_TARGET_MACHINE STREQUAL "qemux86")
+if(WEBOS_TARGET_MACHINE STREQUAL "raspberrypi4" OR WEBOS_TARGET_MACHINE STREQUAL "raspberrypi4-64" OR WEBOS_TARGET_MACHINE STREQUAL "qemux86" OR WEBOS_TARGET_MACHINE STREQUAL "qemux86-64")
 add_definitions(-DPLATFORM_RASPBERRYPI4)
 endif()
 
-if(WEBOS_TARGET_MACHINE STREQUAL "sa8155" OR WEBOS_TARGET_MACHINE STREQUAL "qemux86-64")
+if(WEBOS_TARGET_MACHINE STREQUAL "sa8155")
 add_definitions(-DPLATFORM_SA8155)
 endif()
 

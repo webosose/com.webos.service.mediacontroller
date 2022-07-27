@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 LG Electronics, Inc.
+// Copyright (c) 2020-2022 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -151,7 +151,8 @@ bool MediaControlService::onBTAdapterQueryCb(LSHandle *lshandle, LSMessage *mess
 
 #if defined(PLATFORM_RASPBERRYPI4)
       if(("raspberrypi4 #2" == adapterName) || ("raspberrypi4" == adapterName) ||
-         ("raspberrypi4-64 #2" == adapterName) || ("raspberrypi4-64" == adapterName)) {
+         ("raspberrypi4-64 #2" == adapterName) || ("raspberrypi4-64" == adapterName) ||
+         ("qemux86-64 #2" == adapterName) || ("qemux86-64" == adapterName)) {
 #elif defined(PLATFORM_SA8155)
       if ("sa8155 Bluetooth hci0" == adapterName) {
 #endif
