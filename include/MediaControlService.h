@@ -55,7 +55,6 @@ public:
   bool setMediaPlayPosition (LSMessage &);
   bool receiveMediaPlaybackInfo (LSMessage &);
   bool injectMediaKeyEvent (LSMessage &);
-  bool testKeyEvent(LSMessage &);
   static bool onBTServerStatusCb(LSHandle *lshandle, LSMessage *message, void *ctx);
   static bool onBTAdapterQueryCb(LSHandle *lshandle, LSMessage *message, void *ctx);
   static bool onBTDeviceGetStatusCb(LSHandle *lshandle, LSMessage *message, void *ctx);
@@ -66,6 +65,9 @@ public:
 
 private:
   void subscribeToBTAdapterGetStatus();
+#if USE_TEST_METHOD
+  bool testKeyEvent(LSMessage &);
+#endif
 
   LSHandle *lsHandle_;
   MediaSessionManager *ptrMediaSessionMgr_;

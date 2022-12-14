@@ -56,7 +56,9 @@ MediaControlService::MediaControlService()
   LS_CATEGORY_METHOD(setMediaPlayPosition)
   LS_CATEGORY_METHOD(receiveMediaPlaybackInfo)
   LS_CATEGORY_METHOD(injectMediaKeyEvent)
+#if USE_TEST_METHOD
   LS_CATEGORY_METHOD(testKeyEvent)
+#endif
   LS_CATEGORY_END;
 
   // attach to mainloop and run it
@@ -1321,6 +1323,7 @@ bool MediaControlService::injectMediaKeyEvent(LSMessage &message) {
   return true;
 }
 
+#if USE_TEST_METHOD
 bool MediaControlService::testKeyEvent(LSMessage &message) {
   PMLOG_INFO(CONST_MODULE_MCS, "%s IN", __FUNCTION__);
 
@@ -1364,6 +1367,7 @@ bool MediaControlService::testKeyEvent(LSMessage &message) {
   request.respond(responseObj1.stringify().c_str());
   return true;
 }
+#endif
 
 int  MediaControlService:: updateMetaDataResponse (const std::string &mediaId,  pbnjson::JObject &metaDataObj) {
   int errorCode = MCS_ERROR_NO_ERROR;
