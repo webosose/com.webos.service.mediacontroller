@@ -328,7 +328,7 @@ bool MediaControlService::onGetSessionsInfoCb(LSHandle *lshandle, LSMessage *mes
             pbnjson::JValue deviceSetInfo = items["deviceSetInfo"];
             displayId = deviceSetInfo["displayId"].asNumber<int>();
             deviceSetId = deviceSetInfo["deviceSetId"].asString();
-            BTDeviceInfo btInfo("", "", deviceSetId, displayId);
+            BTDeviceInfo btInfo("", "", std::move(deviceSetId), displayId);
             obj->ptrMediaControlPrivate_->setSessionListInfo(btInfo);
           }
         }

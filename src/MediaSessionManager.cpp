@@ -37,7 +37,7 @@ int MediaSessionManager::addMediaSession (const std::string& mediaId,
   }
 
   mediaSession objMediaSession(mediaId, appId);
-  mapMediaSessionInfo_[mediaId] = objMediaSession;
+  mapMediaSessionInfo_[mediaId] = std::move(objMediaSession);
   return MCS_ERROR_NO_ERROR;
 }
 

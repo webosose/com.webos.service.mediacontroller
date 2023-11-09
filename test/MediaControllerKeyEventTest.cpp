@@ -55,63 +55,63 @@ int main(int argc, char const *argv[]) {
     case 1: {
       std::string keyEventPlay = serviceUri + "/testKeyEvent '{\"mediaId\":\"xDFNUI\", \"keyEvent\":\"play\"}'";
       std::cout << keyEventPlay << std::endl;
-      std::string output = getCommandOutput(keyEventPlay);
+      std::string output = getCommandOutput(std::move(keyEventPlay));
       std::cout << output << std::endl;
       break;
     }
     case 2: {
       std::string keyEventPause = serviceUri + "/testKeyEvent '{\"mediaId\":\"xDFNUI\", \"keyEvent\":\"pause\"}'";
       std::cout << keyEventPause << std::endl;
-      std::string output = getCommandOutput(keyEventPause);
+      std::string output = getCommandOutput(std::move(keyEventPause));
       std::cout << output << std::endl;
       break;
     }
     case 3: {
       std::string keyEventNext = serviceUri + "/testKeyEvent '{\"mediaId\":\"xDFNUI\", \"keyEvent\":\"next\"}'";
       std::cout << keyEventNext << std::endl;
-      std::string output = getCommandOutput(keyEventNext);
+      std::string output = getCommandOutput(std::move(keyEventNext));
       std::cout << output << std::endl;
       break;
     }
     case 4: {
       std::string keyEventPrevious = serviceUri + "/testKeyEvent '{\"mediaId\":\"xDFNUI\", \"keyEvent\":\"previous\"}'";
       std::cout << keyEventPrevious << std::endl;
-      std::string output = getCommandOutput(keyEventPrevious);
+      std::string output = getCommandOutput(std::move(keyEventPrevious));
       std::cout << output << std::endl;
       break;
     }
     case 5: {
       std::string keyEventVolumeUp = serviceUri + "/testKeyEvent '{\"mediaId\":\"xDFNUI\", \"keyEvent\":\"volumeUp\"}'";
       std::cout << keyEventVolumeUp << std::endl;
-      std::string output = getCommandOutput(keyEventVolumeUp);
+      std::string output = getCommandOutput(std::move(keyEventVolumeUp));
       std::cout << output << std::endl;
       break;
     }
     case 6: {
       std::string keyEventVolumeDown = serviceUri + "/testKeyEvent '{\"mediaId\":\"xDFNUI\", \"keyEvent\":\"volumeDown\"}'";
       std::cout << keyEventVolumeDown << std::endl;
-      std::string output = getCommandOutput(keyEventVolumeDown);
+      std::string output = getCommandOutput(std::move(keyEventVolumeDown));
       std::cout << output << std::endl;
       break;
     }
     case 7: {
       std::string keyEventMute = serviceUri + "/testKeyEvent '{\"mediaId\":\"xDFNUI\", \"keyEvent\":\"mute\"}'";
       std::cout << keyEventMute << std::endl;
-      std::string output = getCommandOutput(keyEventMute);
+      std::string output = getCommandOutput(std::move(keyEventMute));
       std::cout << output << std::endl;
       break;
     }
     case 8: {
       std::string keyEventUnmute = serviceUri + "/testKeyEvent '{\"mediaId\":\"xDFNUI\", \"keyEvent\":\"unmute\"}'";
       std::cout << keyEventUnmute << std::endl;
-      std::string output = getCommandOutput(keyEventUnmute);
+      std::string output = getCommandOutput(std::move(keyEventUnmute));
       std::cout << output << std::endl;
       break;
     }
     case 9: {
       std::string keyEventMetaData = serviceUri + "/receiveMediaPlaybackInfo '{\"displayId\":0, \"subscribe\":true}'";
       std::cout << keyEventMetaData << std::endl;
-      std::string output = getCommandOutput(keyEventMetaData);
+      std::string output = getCommandOutput(std::move(keyEventMetaData));
       std::cout << output << std::endl;
       break;
     }

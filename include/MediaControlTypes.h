@@ -204,7 +204,7 @@ struct BTDeviceInfo {
                const int& displayId = -1) :
     deviceAddress_(address),
     adapterAddress_(adapterAddress),
-    deviceSetId_(deviceSetId),
+    deviceSetId_(std::move(deviceSetId)),
     displayId_(displayId)
   {}
 };

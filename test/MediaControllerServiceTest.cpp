@@ -41,7 +41,7 @@ std::string executeCommand(std::string cmd) {
 
 void printOutput(std::string uri, int &test_count){
   std::cout << uri << std::endl;
-  std::string output = executeCommand(uri);
+  std::string output = executeCommand(std::move(uri));
     std::cout << output << std::endl;
   test_count++;
 }
@@ -61,7 +61,7 @@ void test_registerMediaSession() {
   /*invalid parsing expecting string put passing integer*/
   uri = serviceUri + api + "'{\"mediaId\":68754,"
     "\"appId\":\"com.webos.app.test.youtube\",\"subscribe\":true}'";
-  printOutput(uri, test_count);
+  printOutput(std::move(uri), test_count);
 
   std::cout << test_count << " cases executed." << std::endl;
 }
@@ -77,7 +77,7 @@ void test_activateMediaSession() {
   printOutput(uri, test_count);
   /*invalid parsing expecting string put passing integer*/
   uri = serviceUri + api + "'{\"mediaId\":68754}'";
-  printOutput(uri, test_count);
+  printOutput(std::move(uri), test_count);
 
   std::cout << test_count << " cases executed." << std::endl;
 }
@@ -93,7 +93,7 @@ void test_getMediaMetaData() {
   printOutput(uri, test_count);
   /*invalid parsing expecting string put passing integer*/
   uri = serviceUri + api + "'{\"mediaId\":68754}'";
-  printOutput(uri, test_count);
+  printOutput(std::move(uri), test_count);
 
   std::cout << test_count << " cases executed." << std::endl;
 }
@@ -109,7 +109,7 @@ void test_getMediaPlayStatus() {
   printOutput(uri, test_count);
   /*invalid parsing expecting string put passing integer*/
   uri = serviceUri + api + "'{\"mediaId\":68754}'";
-  printOutput(uri, test_count);
+  printOutput(std::move(uri), test_count);
 
   std::cout << test_count << " cases executed." << std::endl;
 }
@@ -125,7 +125,7 @@ void test_getMediaSessionInfo() {
   printOutput(uri, test_count);
   /*invalid parsing expecting string put passing integer*/
   uri = serviceUri + api + "'{\"mediaId\":68754}'";
-  printOutput(uri, test_count);
+  printOutput(std::move(uri), test_count);
 
   std::cout << test_count << " cases executed." << std::endl;
 }
@@ -141,7 +141,7 @@ void test_getMediaSessionId() {
   printOutput(uri, test_count);
   /*invalid parsing expecting string put passing integer*/
   uri = serviceUri + api + "'{\"appId\":68754}'";
-  printOutput(uri, test_count);
+  printOutput(std::move(uri), test_count);
 
   std::cout << test_count << " cases executed." << std::endl;
 }
@@ -154,7 +154,7 @@ void test_getActiveMediaSessions() {
   printOutput(uri, test_count);
   /*invalid test case passing extra argument*/
   uri = serviceUri + api + "'{\"mediaId\":\"xDFNUI\"}'";
-  printOutput(uri, test_count);
+  printOutput(std::move(uri), test_count);
 
   std::cout << test_count << " cases executed." << std::endl;
 }
@@ -181,7 +181,7 @@ void test_setMediaMetaData() {
   uri = serviceUri + api + "'{\"mediaId\":68754,"
     "\"mediaMetaData\": {\"title\":\"BigBangTheory\",\"artist\":\"BigBang\",\"totalDuration\":\"10.10\","
     "\"album\":\"BBT\",\"genre\":\"drama\",\"trackNumber\":2,\"volume\":100 }}'";
-  printOutput(uri, test_count);
+  printOutput(std::move(uri), test_count);
 
   std::cout << test_count << " cases executed." << std::endl;
 }
@@ -200,7 +200,7 @@ void test_setMediaPlayStatus() {
   printOutput(uri, test_count);
   /*invalid parsing expecting string put passing integer*/
   uri = serviceUri + api + "'{\"mediaId\":68754,\"playStatus\":\"PLAYSTATE_PLAYING\"}'";
-  printOutput(uri, test_count);
+  printOutput(std::move(uri), test_count);
 
   std::cout << test_count << " cases executed." << std::endl;
 }
@@ -216,7 +216,7 @@ void test_deactivateMediaSession() {
   printOutput(uri, test_count);
   /*invalid parsing expecting string put passing integer*/
   uri = serviceUri + api + "'{\"mediaId\":68754}'";
-  printOutput(uri, test_count);
+  printOutput(std::move(uri), test_count);
 
   std::cout << test_count << " cases executed." << std::endl;
 }
@@ -232,7 +232,7 @@ void test_unregisterMediaSession() {
   printOutput(uri, test_count);
   /*invalid parsing expecting string put passing integer*/
   uri = serviceUri + api + "'{\"mediaId\":68754}'";
-  printOutput(uri, test_count);
+  printOutput(std::move(uri), test_count);
 
   std::cout << test_count << " cases executed." << std::endl;
 }
