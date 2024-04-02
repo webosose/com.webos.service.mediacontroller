@@ -1,0 +1,23 @@
+{
+  "mediacontroller.query": [
+    "com.webos.service.mediacontroller/getMediaMetaData",
+    "com.webos.service.mediacontroller/getMediaPlayStatus",
+    "com.webos.service.mediacontroller/getMediaSessionInfo",
+    "com.webos.service.mediacontroller/getMediaSessionId",
+    "com.webos.service.mediacontroller/getActiveMediaSessions"
+  ],
+  "mediacontroller.operation": [
+    "com.webos.service.mediacontroller/registerMediaSession",
+    "com.webos.service.mediacontroller/unregisterMediaSession",
+    "com.webos.service.mediacontroller/activateMediaSession",
+    "com.webos.service.mediacontroller/deactivateMediaSession",
+    "com.webos.service.mediacontroller/setMediaMetaData",
+    "com.webos.service.mediacontroller/setMediaPlayStatus",
+    "com.webos.service.mediacontroller/setMediaMuteStatus",
+    "com.webos.service.mediacontroller/setMediaPlayPosition"
+  ],
+  "mediacontroller.management": [
+    "com.webos.service.mediacontroller/receiveMediaPlaybackInfo",
+    "com.webos.service.mediacontroller/injectMediaKeyEvent"
+  ]
+}

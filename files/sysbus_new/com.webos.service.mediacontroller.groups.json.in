@@ -1,0 +1,17 @@
+{
+    "mediacontroller.query": {
+        "trust": "dev",
+        "description": "mediacontroller query permissions",
+        "privacy": false
+    },
+    "mediacontroller.operation": {
+        "trust": "oem",
+        "description": "mediacontroller operation permissions",
+        "privacy": false
+    },
+    "mediacontroller.management": {
+        "trust": "oem",
+        "description": "mediacontroller manage permissions",
+        "privacy": false
+    }
+}
