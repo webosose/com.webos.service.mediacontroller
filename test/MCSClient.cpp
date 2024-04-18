@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 LG Electronics, Inc.
+// Copyright (c) 2020-2024 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -159,17 +159,20 @@ void runMainMenuThread() {
         input = isAvn ? (input + 1) : input;
         while(flagMainMenu) {
           std::cout << "Select widget event : " << std::endl;
-          std::cout << "1. Play" << std::endl;
-          std::cout << "2. Pause" << std::endl;
-          std::cout << "3. Mute" << std::endl;
-          std::cout << "4. Unmute" << std::endl;
-          std::cout << "5. Next" << std::endl;
-          std::cout << "6. Previous" << std::endl;
-          std::cout << "7. Get Play Position" << std::endl;
-          std::cout << "8. Get Mute Status" << std::endl;
-          std::cout << "9. Get Playback Status" << std::endl;
+          std::cout << "1.  Play" << std::endl;
+          std::cout << "2.  Pause" << std::endl;
+          std::cout << "3.  Mute" << std::endl;
+          std::cout << "4.  Unmute" << std::endl;
+          std::cout << "5.  Next" << std::endl;
+          std::cout << "6.  Previous" << std::endl;
+          std::cout << "7.  Get Play Position" << std::endl;
+          std::cout << "8.  Get Mute Status" << std::endl;
+          std::cout << "9.  Get Playback Status" << std::endl;
           std::cout << "10. Get Metadata" << std::endl;
           std::cout << "11. Main Menu" << std::endl;
+          std::cout << "12. Toggle Mic" << std::endl;
+          std::cout << "13. Toggle Camera" << std::endl;
+          std::cout << "14. Hang Up" << std::endl;
           int userChoice = -1;
           std::cin >> userChoice;
           switch (userChoice) {
@@ -179,6 +182,9 @@ void runMainMenuThread() {
             case 4:
             case 5:
             case 6:
+            case 12:
+            case 13:
+            case 14:
             {
               std::string eventCmd;
               if(userChoice == 1) eventCmd = "play";
@@ -187,6 +193,9 @@ void runMainMenuThread() {
               else if(userChoice == 4) eventCmd = "unmute";
               else if(userChoice == 5) eventCmd = "next";
               else if(userChoice == 6) eventCmd = "previous";
+              else if(userChoice == 12) eventCmd = "toggleMic";
+              else if(userChoice == 13) eventCmd = "toggleCamera";
+              else if(userChoice == 14) eventCmd = "hangUp";
               std::string uri = "luna-send -n 1 -f luna://com.webos.service.mediacontroller/injectMediaKeyEvent ";
               std::string payload = "'{\"displayId\":" + std::to_string(input) + ",\"keyEvent\":\"" + eventCmd + "\"}'";
               std::string cmd = uri + payload;
