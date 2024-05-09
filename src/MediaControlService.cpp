@@ -155,6 +155,8 @@ bool MediaControlService::onBTAdapterQueryCb(LSHandle *lshandle, LSMessage *mess
       if(("raspberrypi4 #2" == adapterName) || ("raspberrypi4" == adapterName) ||
          ("raspberrypi4-64 #2" == adapterName) || ("raspberrypi4-64" == adapterName) ||
          ("qemux86-64 #2" == adapterName) || ("qemux86-64" == adapterName)) {
+#elif defined(PLATFORM_O22) //After the Bluetooth service support is expanded, the adapter name will need to be updated
+      if("o22" == adapterName) {
 #elif defined(PLATFORM_SA8155)
       if ("sa8155 Bluetooth hci0" == adapterName) {
 #endif
@@ -281,7 +283,7 @@ bool MediaControlService::onBTAvrcpGetStatusCb(LSHandle *lshandle, LSMessage *me
 
         if(!(obj->ptrMediaControlPrivate_->isDeviceRegistered(address, adapterAddress))) {
           int displayId = obj->ptrMediaControlPrivate_->getDisplayIdForBT(adapterAddress);
-#if defined(PLATFORM_RASPBERRYPI4)
+#if defined(PLATFORM_RASPBERRYPI4) || defined(PLATFORM_O22)
           displayId = 0;
 #endif
           BTDeviceInfo objDevInfo(address, adapterAddress, "", displayId);
@@ -371,7 +373,7 @@ bool MediaControlService::onBTAvrcpKeyEventsCb(LSHandle *lshandle, LSMessage *me
         std::string mediaId = obj->ptrMediaControlPrivate_->getMediaId(address);
         int displayIdForMedia = obj->ptrMediaSessionMgr_->getDisplayIdForMedia(mediaId);
         //ToDo : Below platform check to be removed once multi intsnace support available in chromium for OSE
-#if defined(PLATFORM_RASPBERRYPI4)
+#if defined(PLATFORM_RASPBERRYPI4) || defined(PLATFORM_O22)
         displayIdForBT = displayIdForMedia = 0;
 #endif
         PMLOG_INFO(CONST_MODULE_MCS, "%s mediaId for sending BT key event : %s", __FUNCTION__, mediaId.c_str());
@@ -866,7 +868,7 @@ bool MediaControlService::setMediaMetaData(LSMessage& message) {
       /*Get display ID from media ID*/
       int displayId = ptrMediaSessionMgr_->getDisplayIdForMedia(mediaId);
       //ToDo : Below platform check to be removed once dual blueetooth support in OSE
-#if defined(PLATFORM_RASPBERRYPI4)
+#if defined(PLATFORM_RASPBERRYPI4) || defined(PLATFORM_O22)
       displayId = 0;
 #endif
       pbnjson::JObject metaDataObj;
@@ -951,7 +953,7 @@ bool MediaControlService::setMediaPlayStatus(LSMessage& message) {
         PMLOG_INFO(CONST_MODULE_MCS, "%s Invalid PlaybackStatus", __FUNCTION__);
 
       int displayIdForMedia = ptrMediaSessionMgr_->getDisplayIdForMedia(mediaId);
-#if defined(PLATFORM_RASPBERRYPI4)
+#if defined(PLATFORM_RASPBERRYPI4) || defined(PLATFORM_O22)
       displayIdForMedia = 0;
 #endif
       BTDeviceInfo objDevInfo;
@@ -986,7 +988,7 @@ bool MediaControlService::setMediaPlayStatus(LSMessage& message) {
       /*Get display ID from media ID*/
       int displayId = ptrMediaSessionMgr_->getDisplayIdForMedia(mediaId);
       //ToDo : Below platform check to be removed once dual blueetooth support in OSE
-#if defined(PLATFORM_RASPBERRYPI4)
+#if defined(PLATFORM_RASPBERRYPI4) || defined(PLATFORM_O22)
       displayId = 0;
 #endif
       pbnjson::JValue responsePayload = pbnjson::Object();
@@ -1056,7 +1058,7 @@ bool MediaControlService::setMediaMuteStatus (LSMessage & message){
       /*Get display ID from media ID*/
       int displayId = ptrMediaSessionMgr_->getDisplayIdForMedia(mediaId);
       //ToDo : Below platform check to be removed once dual blueetooth support in OSE
-#if defined(PLATFORM_RASPBERRYPI4)
+#if defined(PLATFORM_RASPBERRYPI4) || defined(PLATFORM_O22)
       displayId = 0;
 #endif
       pbnjson::JValue responsePayload = pbnjson::Object();
@@ -1121,7 +1123,7 @@ bool MediaControlService::setMediaPlayPosition (LSMessage & message){
       /*Get display ID from media ID*/
       int displayId = ptrMediaSessionMgr_->getDisplayIdForMedia(mediaId);
       //ToDo : Below platform check to be removed once dual blueetooth support in OSE
-#if defined(PLATFORM_RASPBERRYPI4)
+#if defined(PLATFORM_RASPBERRYPI4) || defined(PLATFORM_O22)
       displayId = 0;
 #endif
       pbnjson::JValue responsePayload = pbnjson::Object();
@@ -1174,7 +1176,7 @@ bool MediaControlService::receiveMediaPlaybackInfo (LSMessage & message){
   pbnjson::JValue payload = msg.get();
   int displayId  = payload["displayId"].asNumber<int>();
       //ToDo : Below platform check to be removed once dual blueetooth support in OSE
-#if defined(PLATFORM_RASPBERRYPI4)
+#if defined(PLATFORM_RASPBERRYPI4) || defined(PLATFORM_O22)
       displayId = 0;
 #endif
   bool subscribed = payload["subscribe"].asBool();
@@ -1284,7 +1286,7 @@ bool MediaControlService::injectMediaKeyEvent(LSMessage &message) {
   pbnjson::JValue payload = msg.get();
   int displayId  = payload["displayId"].asNumber<int>();
       //ToDo : Below platform check to be removed once dual blueetooth support in OSE
-#if defined(PLATFORM_RASPBERRYPI4)
+#if defined(PLATFORM_RASPBERRYPI4) || defined(PLATFORM_O22)
       displayId = 0;
 #endif
   std::string keyEvent = payload["keyEvent"].asString();
