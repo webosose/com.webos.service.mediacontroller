@@ -96,12 +96,12 @@ target_link_libraries(${PROJECT_NAME}
 #MediaControllerServiceTest project exe
 set (SRC_TEST ${CMAKE_SOURCE_DIR}/test/MediaControllerServiceTest.cpp)
 add_executable (MCSTestApp ${SRC_TEST})
-install(TARGETS MCSTestApp DESTINATION ${WEBOS_INSTALL_SBINDIR})
+install(TARGETS MCSTestApp DESTINATION ${WEBOS_INSTALL_TESTSDIR}/${PROJECT_NAME})
 
 #mediacontrollerkeyevent project exe
 set (SRC_KEY_TEST ${CMAKE_SOURCE_DIR}/test/MediaControllerKeyEventTest.cpp)
 add_executable (MCSKeyEventTestApp ${SRC_KEY_TEST})
-install(TARGETS MCSKeyEventTestApp DESTINATION ${WEBOS_INSTALL_SBINDIR})
+install(TARGETS MCSKeyEventTestApp DESTINATION ${WEBOS_INSTALL_TESTSDIR}/${PROJECT_NAME})
 
 install(TARGETS ${PROJECT_NAME} DESTINATION ${WEBOS_INSTALL_SBINDIR})
 if(${USE_NEW_ACG})

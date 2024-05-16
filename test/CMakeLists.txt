@@ -65,5 +65,5 @@ target_link_libraries(${PROJECT_NAME}
                       ${PBNJSON_CPP_LDFLAGS}
                       ${LS2++_LDFLAGS})
 
-install(TARGETS ${PROJECT_NAME} DESTINATION ${WEBOS_INSTALL_SBINDIR})
+install(TARGETS ${PROJECT_NAME} DESTINATION ${WEBOS_INSTALL_TESTSDIR}/com.webos.service.mediacontroller)
 webos_build_system_bus_files()
