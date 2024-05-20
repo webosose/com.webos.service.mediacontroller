@@ -153,9 +153,9 @@ bool MediaControlService::onBTAdapterQueryCb(LSHandle *lshandle, LSMessage *mess
 
       if(("raspberrypi4 #2" == adapterName) || ("raspberrypi4" == adapterName) ||
          ("raspberrypi4-64 #2" == adapterName) || ("raspberrypi4-64" == adapterName) ||
-         ("qemux86-64 #2" == adapterName) || ("qemux86-64" == adapterName)) ||
+         ("qemux86-64 #2" == adapterName) || ("qemux86-64" == adapterName) ||
          ("o22" == adapterName) || //After the Bluetooth service support is expanded, the adapter name will need to be updated
-         ("sa8155 Bluetooth hci0" == adapterName) {
+         ("sa8155 Bluetooth hci0" == adapterName)) {
 
         deviceSetId = "RSE-L";
         std::string payload = "{\"adapterAddress\":\"" + adapterAddress + "\",\"subscribe\":true}";
