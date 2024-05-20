@@ -151,15 +151,12 @@ bool MediaControlService::onBTAdapterQueryCb(LSHandle *lshandle, LSMessage *mess
       PMLOG_INFO(CONST_MODULE_MCS,"%s : adapterName : %s, adapterAddress : %s",
                                    __FUNCTION__, adapterName.c_str(), adapterAddress.c_str());
 
-#if defined(PLATFORM_RASPBERRYPI4)
       if(("raspberrypi4 #2" == adapterName) || ("raspberrypi4" == adapterName) ||
          ("raspberrypi4-64 #2" == adapterName) || ("raspberrypi4-64" == adapterName) ||
-         ("qemux86-64 #2" == adapterName) || ("qemux86-64" == adapterName)) {
-#elif defined(PLATFORM_O22) //After the Bluetooth service support is expanded, the adapter name will need to be updated
-      if("o22" == adapterName) {
-#elif defined(PLATFORM_SA8155)
-      if ("sa8155 Bluetooth hci0" == adapterName) {
-#endif
+         ("qemux86-64 #2" == adapterName) || ("qemux86-64" == adapterName)) ||
+         ("o22" == adapterName) || //After the Bluetooth service support is expanded, the adapter name will need to be updated
+         ("sa8155 Bluetooth hci0" == adapterName) {
+
         deviceSetId = "RSE-L";
         std::string payload = "{\"adapterAddress\":\"" + adapterAddress + "\",\"subscribe\":true}";
         PMLOG_INFO(CONST_MODULE_MCS,"%s : payload = %s for first adapter",__FUNCTION__, payload.c_str());
