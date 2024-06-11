@@ -58,15 +58,6 @@ bool metaDataResponse(LSHandle* sh, LSMessage* reply, void* ctx) {
   return true;
 }
 
-bool SessionsResponse(LSHandle* sh, LSMessage* reply, void* ctx) {
-  LSMessageRef(reply);
-  std::string payload_message = LSMessageGetPayload(reply);
-  size_t found = payload_message.find(AVNDeviceType);
-    if (found != std::string::npos)
-      isAvn = true;
-    return true;
-}
-
 MCSClient::MCSClient()
 {
   std::string serviceName = "com.webos.service.mediacontrollertest";
@@ -82,25 +73,6 @@ MCSClient::~MCSClient() {
   AutoLSError error;
   LSUnregister(handle, &error);
   g_main_context_unref(context);
-}
-
-void runSessionSubscriptionThread() {
-  GMainLoop* mainLoop = g_main_loop_new(nullptr, false);
-  LSError lserror;
-  if(!LSGmainAttach(gHandle, mainLoop, &lserror)) {
-    std::cout << "Unable to attach to service" << std::endl;
-    return;
-  }
-  std::string subscriptionUri = "luna://com.webos.service.account/getSessions";
-  std::string payloadData = "{\"subscribe\":true}";
-  LSError error;
-  if(!LSCall(gHandle, subscriptionUri.c_str(), payloadData.c_str(), SessionsResponse, NULL, NULL, &error)) {
-    std::cout << "LSCall error for getSessionList" << std::endl;
-  }
-
-  g_main_loop_run(mainLoop);
-  g_main_loop_unref(mainLoop);
-  mainLoop = nullptr;
 }
 
 void runSubscriptionThread() {
@@ -265,16 +237,10 @@ int main(int argc, char ** argv) {
   MCSClient obj;
   gHandle = obj.getHandle();
 
-#if defined(PLATFORM_SA8155)
-  std::thread runThread1(runSessionSubscriptionThread);
-#endif
-  std::thread runThread2(runSubscriptionThread);
-  std::thread runThread3(runMainMenuThread);
-#if defined(PLATFORM_SA8155)
-  runThread1.join();
-#endif
-  runThread2.join();
-  runThread3.join();
+  std::thread subscriptionThread(runSubscriptionThread);
+  std::thread menuThread(runMainMenuThread);
+  subscriptionThread.join();
+  menuThread.join();
 
   return 0;
 }

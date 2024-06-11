@@ -261,7 +261,7 @@ std::string MediaSessionManager::getMediaIdFromDisplayId(const int& displayId) {
   for (const auto& itr : mapMediaSessionInfo_) {
     std::string appId = itr.second.getAppId();
     int appDisplayId = (appId.back()-48);
-#if defined(PLATFORM_RASPBERRYPI4) || defined(PLATFORM_O22)
+#if !defined(FEATURE_DUAL_DISPLAY)
     appDisplayId = 0;
 #endif
     if(appDisplayId == displayId){

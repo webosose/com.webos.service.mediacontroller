@@ -45,18 +45,6 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 add_definitions(-DUSE_TEST_METHOD)
 endif()
 
-if(WEBOS_TARGET_MACHINE STREQUAL "raspberrypi4" OR WEBOS_TARGET_MACHINE STREQUAL "raspberrypi4-64" OR WEBOS_TARGET_MACHINE STREQUAL "qemux86" OR WEBOS_TARGET_MACHINE STREQUAL "qemux86-64")
-add_definitions(-DPLATFORM_RASPBERRYPI4)
-endif()
-
-if(WEBOS_TARGET_MACHINE STREQUAL "o22")
-add_definitions(-DPLATFORM_O22)
-endif()
-
-if(WEBOS_TARGET_MACHINE STREQUAL "sa8155")
-add_definitions(-DPLATFORM_SA8155)
-endif()
-
 webos_add_compiler_flags(ALL -Wall -funwind-tables)
 webos_add_compiler_flags(ALL -Wall -rdynamic)
 

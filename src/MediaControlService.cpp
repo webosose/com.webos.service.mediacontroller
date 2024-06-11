@@ -90,17 +90,6 @@ bool MediaControlService::onBTServerStatusCb(LSHandle *lshandle, LSMessage *mess
     if(ptrService) {
       // get BT to get connected devices
       ptrService->subscribeToBTAdapterGetStatus();
-
-#if defined(PLATFORM_SA8155)
-        std::string payloadData = "{\"subscribe\":true}";
-        CLSError lserrorno;
-        if (!LSCall(ptrService->lsHandle_,
-                    cstrGetSessions.c_str(),
-                    payloadData.c_str(),
-                    &MediaControlService::onGetSessionsInfoCb,
-                    ctx, NULL, &lserrorno))
-          PMLOG_ERROR(CONST_MODULE_MCS,"%s LSCall failed to onGetSessionsInfoCb", __FUNCTION__);
-#endif
     }
   }
   return true;
@@ -150,41 +139,30 @@ bool MediaControlService::onBTAdapterQueryCb(LSHandle *lshandle, LSMessage *mess
       std::string adapterAddress = adapters[i]["adapterAddress"].asString();
       PMLOG_INFO(CONST_MODULE_MCS,"%s : adapterName : %s, adapterAddress : %s",
                                    __FUNCTION__, adapterName.c_str(), adapterAddress.c_str());
-
-      if(("raspberrypi4 #2" == adapterName) || ("raspberrypi4" == adapterName) ||
-         ("raspberrypi4-64 #2" == adapterName) || ("raspberrypi4-64" == adapterName) ||
-         ("qemux86-64 #2" == adapterName) || ("qemux86-64" == adapterName) ||
-         ("o22" == adapterName) || //After the Bluetooth service support is expanded, the adapter name will need to be updated
-         ("sa8155 Bluetooth hci0" == adapterName)) {
-
-        deviceSetId = "RSE-L";
-        std::string payload = "{\"adapterAddress\":\"" + adapterAddress + "\",\"subscribe\":true}";
-        PMLOG_INFO(CONST_MODULE_MCS,"%s : payload = %s for first adapter",__FUNCTION__, payload.c_str());
-        if(obj) {
-          if (!LSCall(obj->lsHandle_,
-                      cstrBTDeviceGetStatus.c_str(),
-                      payload.c_str(),
-                      &MediaControlService::onBTDeviceGetStatusCb,
-                      ctx, NULL, &lserror))
-            PMLOG_ERROR(CONST_MODULE_MCS,"%s : LSCall failed for BT device/getStatus", __FUNCTION__);
-        }
+      deviceSetId = "RSE-L";
+      std::string payloadL = "{\"adapterAddress\":\"" + adapterAddress + "\",\"subscribe\":true}";
+      PMLOG_INFO(CONST_MODULE_MCS,"%s : payload = %s for first adapter",__FUNCTION__, payloadL.c_str());
+      if(obj) {
+        if (!LSCall(obj->lsHandle_,
+                    cstrBTDeviceGetStatus.c_str(),
+                    payloadL.c_str(),
+                    &MediaControlService::onBTDeviceGetStatusCb,
+                    ctx, NULL, &lserror))
+          PMLOG_ERROR(CONST_MODULE_MCS,"%s : LSCall failed for BT device/getStatus", __FUNCTION__);
       }
-      else if ("sa8155 Bluetooth hci1" == adapterName) {
-        deviceSetId = "RSE-R";
-        std::string payload = "{\"adapterAddress\":\"" + adapterAddress + "\",\"subscribe\":true}";
-        PMLOG_INFO(CONST_MODULE_MCS,"%s : payload = %s for second adapter",__FUNCTION__, payload.c_str());
-        if(obj) {
-          if (!LSCall(obj->lsHandle_,
-                      cstrBTDeviceGetStatus.c_str(),
-                      payload.c_str(),
-                      &MediaControlService::onBTDeviceGetStatusCb,
-                      ctx, NULL, &lserror))
-            PMLOG_ERROR(CONST_MODULE_MCS,"%s : LSCall failed for BT device/getStatus", __FUNCTION__);
-        }
+#if defined(FEATURE_DUAL_DISPLAY)
+      deviceSetId = "RSE-R";
+      std::string payloadR = "{\"adapterAddress\":\"" + adapterAddress + "\",\"subscribe\":true}";
+      PMLOG_INFO(CONST_MODULE_MCS,"%s : payload = %s for second adapter",__FUNCTION__, payloadR.c_str());
+      if(obj) {
+        if (!LSCall(obj->lsHandle_,
+                    cstrBTDeviceGetStatus.c_str(),
+                    payloadR.c_str(),
+                    &MediaControlService::onBTDeviceGetStatusCb,
+                    ctx, NULL, &lserror))
+          PMLOG_ERROR(CONST_MODULE_MCS,"%s : LSCall failed for BT device/getStatus", __FUNCTION__);
       }
-      else
-        PMLOG_ERROR(CONST_MODULE_MCS,"%s: Already subscribe for adapter: %s", __FUNCTION__, adapterAddress.c_str());
-
+#endif
     PMLOG_INFO(CONST_MODULE_MCS,"%s : adapterAddress = %s deviceSetId = %s [%d]",__FUNCTION__, adapterAddress.c_str(), deviceSetId.c_str(), __LINE__);
     if (obj && !deviceSetId.empty() && !adapterAddress.empty())
       obj->ptrMediaControlPrivate_->setBTAdapterInfo(deviceSetId, adapterAddress);
@@ -280,7 +258,7 @@ bool MediaControlService::onBTAvrcpGetStatusCb(LSHandle *lshandle, LSMessage *me
 
         if(!(obj->ptrMediaControlPrivate_->isDeviceRegistered(address, adapterAddress))) {
           int displayId = obj->ptrMediaControlPrivate_->getDisplayIdForBT(adapterAddress);
-#if defined(PLATFORM_RASPBERRYPI4) || defined(PLATFORM_O22)
+#if !defined(FEATURE_DUAL_DISPLAY)
           displayId = 0;
 #endif
           BTDeviceInfo objDevInfo(address, adapterAddress, "", displayId);
@@ -370,7 +348,7 @@ bool MediaControlService::onBTAvrcpKeyEventsCb(LSHandle *lshandle, LSMessage *me
         std::string mediaId = obj->ptrMediaControlPrivate_->getMediaId(address);
         int displayIdForMedia = obj->ptrMediaSessionMgr_->getDisplayIdForMedia(mediaId);
         //ToDo : Below platform check to be removed once multi intsnace support available in chromium for OSE
-#if defined(PLATFORM_RASPBERRYPI4) || defined(PLATFORM_O22)
+#if !defined(FEATURE_DUAL_DISPLAY)
         displayIdForBT = displayIdForMedia = 0;
 #endif
         PMLOG_INFO(CONST_MODULE_MCS, "%s mediaId for sending BT key event : %s", __FUNCTION__, mediaId.c_str());
@@ -865,7 +843,7 @@ bool MediaControlService::setMediaMetaData(LSMessage& message) {
       /*Get display ID from media ID*/
       int displayId = ptrMediaSessionMgr_->getDisplayIdForMedia(mediaId);
       //ToDo : Below platform check to be removed once dual blueetooth support in OSE
-#if defined(PLATFORM_RASPBERRYPI4) || defined(PLATFORM_O22)
+#if !defined(FEATURE_DUAL_DISPLAY)
       displayId = 0;
 #endif
       pbnjson::JObject metaDataObj;
@@ -950,7 +928,7 @@ bool MediaControlService::setMediaPlayStatus(LSMessage& message) {
         PMLOG_INFO(CONST_MODULE_MCS, "%s Invalid PlaybackStatus", __FUNCTION__);
 
       int displayIdForMedia = ptrMediaSessionMgr_->getDisplayIdForMedia(mediaId);
-#if defined(PLATFORM_RASPBERRYPI4) || defined(PLATFORM_O22)
+#if !defined(FEATURE_DUAL_DISPLAY)
       displayIdForMedia = 0;
 #endif
       BTDeviceInfo objDevInfo;
@@ -985,7 +963,7 @@ bool MediaControlService::setMediaPlayStatus(LSMessage& message) {
       /*Get display ID from media ID*/
       int displayId = ptrMediaSessionMgr_->getDisplayIdForMedia(mediaId);
       //ToDo : Below platform check to be removed once dual blueetooth support in OSE
-#if defined(PLATFORM_RASPBERRYPI4) || defined(PLATFORM_O22)
+#if !defined(FEATURE_DUAL_DISPLAY)
       displayId = 0;
 #endif
       pbnjson::JValue responsePayload = pbnjson::Object();
@@ -1055,7 +1033,7 @@ bool MediaControlService::setMediaMuteStatus (LSMessage & message){
       /*Get display ID from media ID*/
       int displayId = ptrMediaSessionMgr_->getDisplayIdForMedia(mediaId);
       //ToDo : Below platform check to be removed once dual blueetooth support in OSE
-#if defined(PLATFORM_RASPBERRYPI4) || defined(PLATFORM_O22)
+#if !defined(FEATURE_DUAL_DISPLAY)
       displayId = 0;
 #endif
       pbnjson::JValue responsePayload = pbnjson::Object();
@@ -1120,7 +1098,7 @@ bool MediaControlService::setMediaPlayPosition (LSMessage & message){
       /*Get display ID from media ID*/
       int displayId = ptrMediaSessionMgr_->getDisplayIdForMedia(mediaId);
       //ToDo : Below platform check to be removed once dual blueetooth support in OSE
-#if defined(PLATFORM_RASPBERRYPI4) || defined(PLATFORM_O22)
+#if !defined(FEATURE_DUAL_DISPLAY)
       displayId = 0;
 #endif
       pbnjson::JValue responsePayload = pbnjson::Object();
@@ -1173,7 +1151,7 @@ bool MediaControlService::receiveMediaPlaybackInfo (LSMessage & message){
   pbnjson::JValue payload = msg.get();
   int displayId  = payload["displayId"].asNumber<int>();
       //ToDo : Below platform check to be removed once dual blueetooth support in OSE
-#if defined(PLATFORM_RASPBERRYPI4) || defined(PLATFORM_O22)
+#if !defined(FEATURE_DUAL_DISPLAY)
       displayId = 0;
 #endif
   bool subscribed = payload["subscribe"].asBool();
@@ -1283,7 +1261,7 @@ bool MediaControlService::injectMediaKeyEvent(LSMessage &message) {
   pbnjson::JValue payload = msg.get();
   int displayId  = payload["displayId"].asNumber<int>();
       //ToDo : Below platform check to be removed once dual blueetooth support in OSE
-#if defined(PLATFORM_RASPBERRYPI4) || defined(PLATFORM_O22)
+#if !defined(FEATURE_DUAL_DISPLAY)
       displayId = 0;
 #endif
   std::string keyEvent = payload["keyEvent"].asString();
