@@ -33,6 +33,9 @@ std::string playStatus[3];
 std::string playPosition[3];
 std::string mediaMetaData[3];
 std::string AVNDeviceType = "AVN";
+std::string coverArtData;
+std::vector<std::string> source;
+
 bool isAvn = false;
 LSHandle *gHandle = nullptr;
 
@@ -54,6 +57,18 @@ bool metaDataResponse(LSHandle* sh, LSMessage* reply, void* ctx) {
     pbnjson::JValue metaData = payload["mediaMetaData"];
     if(metaData.stringify() != "null")
       mediaMetaData[displayId] = metaData.stringify();
+    if(payload.hasKey("coverArt"))
+    {
+      source.clear();
+      pbnjson::JValue coverArt = payload["coverArt"];
+      if (coverArt.isArray() && coverArt.arraySize() > 0) {
+        coverArtData = coverArt.stringify();
+        for (int i = 0; i < coverArt.arraySize(); i++) {
+          if(coverArt[i].hasKey("src") && coverArt[i]["src"].isString())
+            source.push_back(coverArt[i]["src"].asString());
+        }
+      }
+    }
   }
   return true;
 }
@@ -97,15 +112,27 @@ void runSubscriptionThread() {
   if(!LSCall(gHandle, subscriptionUri.c_str(), payloadUri0.c_str(), metaDataResponse, NULL, NULL, &error)) {
     std::cout << "LSCall error for receiveMediaPlaybackInfo" << std::endl;
   }
-  if(!LSCall(gHandle, subscriptionUri.c_str(), payloadUri1.c_str(), metaDataResponse, NULL, NULL, &error)) {
-    std::cout << "LSCall error for receiveMediaPlaybackInfo" << std::endl;
-  }
 
   g_main_loop_run(mainLoop);
   g_main_loop_unref(mainLoop);
   mainLoop = nullptr;
 }
 
+std::string executeCommand(const char* cmd) {
+    std::string result = "";
+    char buffer[128];
+    FILE* pipe = popen(cmd, "r");
+    if (!pipe) {
+        std::cerr << "Error executing command\n";
+        return "";
+    }
+    while (!feof(pipe)) {
+        if (fgets(buffer, 128, pipe) != NULL)
+            result += buffer;
+    }
+    pclose(pipe);
+    return result;
+}
 
 void runMainMenuThread() {
   GMainLoop* mainLoop = g_main_loop_new(nullptr, false);
@@ -145,6 +172,8 @@ void runMainMenuThread() {
           std::cout << "12. Toggle Mic" << std::endl;
           std::cout << "13. Toggle Camera" << std::endl;
           std::cout << "14. Hang Up" << std::endl;
+          std::cout << "15. Get CoverArt Info" << std::endl;
+          std::cout << "16. Get CoverArt Path" << std::endl;
           int userChoice = -1;
           std::cin >> userChoice;
           switch (userChoice) {
@@ -204,6 +233,28 @@ void runMainMenuThread() {
             case 11:
             {
               flagMainMenu = false;
+              break;
+            }
+            case 15:
+            {
+              std::cout << "CoverArt : " << coverArtData << std::endl;
+              break;
+            }
+            case 16:
+            {
+              std::string uri = "luna-send -n 1 -f luna://com.webos.service.mediacontroller/getMediaCoverArtPath ";
+              std::string src = "";
+              for(int i = 0; i < source.size(); i++) {
+                src += "\"" + source[i] + "\"";
+                if(i+1 < source.size())
+                  src += ",";
+              }
+              std::string payload = "'{\"displayId\":" + std::to_string(input) + ",\"src\":[" + src + "]}'";
+              std::string cmd = uri + payload;
+              std::cout << "cmd = " << cmd << std::endl;
+              std::string response = executeCommand(cmd.c_str());
+
+              std::cout << "Response:\n" << response << std::endl;
               break;
             }
             default:
