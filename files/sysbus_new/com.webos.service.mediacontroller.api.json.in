@@ -4,7 +4,8 @@
     "com.webos.service.mediacontroller/getMediaPlayStatus",
     "com.webos.service.mediacontroller/getMediaSessionInfo",
     "com.webos.service.mediacontroller/getMediaSessionId",
-    "com.webos.service.mediacontroller/getActiveMediaSessions"
+    "com.webos.service.mediacontroller/getActiveMediaSessions",
+    "com.webos.service.mediacontroller/getMediaCoverArtPath"
   ],
   "mediacontroller.operation": [
     "com.webos.service.mediacontroller/registerMediaSession",
@@ -14,7 +15,8 @@
     "com.webos.service.mediacontroller/setMediaMetaData",
     "com.webos.service.mediacontroller/setMediaPlayStatus",
     "com.webos.service.mediacontroller/setMediaMuteStatus",
-    "com.webos.service.mediacontroller/setMediaPlayPosition"
+    "com.webos.service.mediacontroller/setMediaPlayPosition",
+    "com.webos.service.mediacontroller/setMediaCoverArt"
   ],
   "mediacontroller.management": [
     "com.webos.service.mediacontroller/receiveMediaPlaybackInfo",

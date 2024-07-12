@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 LG Electronics, Inc.
+// Copyright (c) 2020-2024 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -49,10 +49,12 @@ public:
   bool getMediaSessionInfo(LSMessage &);
   bool getMediaSessionId(LSMessage &);
   bool getActiveMediaSessions(LSMessage &);
+  bool getMediaCoverArtPath(LSMessage &);
   bool setMediaMetaData(LSMessage &);
   bool setMediaPlayStatus(LSMessage &);
   bool setMediaMuteStatus (LSMessage &);
   bool setMediaPlayPosition (LSMessage &);
+  bool setMediaCoverArt (LSMessage &);
   bool receiveMediaPlaybackInfo (LSMessage &);
   bool injectMediaKeyEvent (LSMessage &);
   static bool onBTServerStatusCb(LSHandle *lshandle, LSMessage *message, void *ctx);

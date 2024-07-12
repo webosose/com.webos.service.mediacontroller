@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 LG Electronics, Inc.
+// Copyright (c) 2020-2024 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
  -- ----------------------------------------------------------------------------*/
 #include "MediaControlService.h"
 #include "Lsutils.h"
+
 
 #include <string>
 
@@ -50,12 +51,14 @@ MediaControlService::MediaControlService()
   LS_CATEGORY_METHOD(getMediaSessionInfo)
   LS_CATEGORY_METHOD(getMediaSessionId)
   LS_CATEGORY_METHOD(getActiveMediaSessions)
+  LS_CATEGORY_METHOD(getMediaCoverArtPath)
   LS_CATEGORY_METHOD(setMediaMetaData)
   LS_CATEGORY_METHOD(setMediaPlayStatus)
   LS_CATEGORY_METHOD(setMediaMuteStatus)
   LS_CATEGORY_METHOD(setMediaPlayPosition)
   LS_CATEGORY_METHOD(receiveMediaPlaybackInfo)
   LS_CATEGORY_METHOD(injectMediaKeyEvent)
+  LS_CATEGORY_METHOD(setMediaCoverArt)
 #if USE_TEST_METHOD
   LS_CATEGORY_METHOD(testKeyEvent)
 #endif
@@ -795,6 +798,72 @@ bool MediaControlService::getActiveMediaSessions(LSMessage& message) {
   return true;
 }
 
+bool MediaControlService::getMediaCoverArtPath(LSMessage& message) {
+  PMLOG_INFO(CONST_MODULE_MCS, "%s IN", __FUNCTION__);
+
+  LSMessageJsonParser msg(&message,STRICT_SCHEMA(PROPS_2(REQUIRED(displayId, integer), REQUIRED(src,string)) REQUIRED_2(displayId,src)));
+
+  LS::Message request(&message);
+  int errorCode = MCS_ERROR_NO_ERROR;
+  std::string errorText;
+  std::string response;
+  if (!msg.parse(__FUNCTION__)) {
+    PMLOG_ERROR(CONST_MODULE_MCS, "%s Parsing failed", __FUNCTION__);
+    errorCode = MCS_ERROR_PARSING_FAILED;
+    errorText = CSTR_PARSING_ERROR;
+    response = createJsonReplyString(false, errorCode, errorText);
+    request.respond(response.c_str());
+    return true;
+  }
+
+  response = createJsonReplyString(true);
+
+  pbnjson::JValue payload = msg.get();
+  int displayId  = payload["displayId"].asNumber<int>();
+  std::string src = payload["src"].asString();
+
+#if !defined(FEATURE_DUAL_DISPLAY)
+      displayId = 0;
+#endif
+
+  CLSError lserror;
+  if (!LSSubscriptionAdd(lsHandle_, "getMediaCoverArtPath", &message, &lserror)) {
+      PMLOG_ERROR(CONST_MODULE_MCS, "%s LSSubscriptionAdd failed ",__FUNCTION__);
+      errorCode = MCS_ERROR_SUBSCRIPTION_FAILED;
+      errorText = CSTR_SUBSCRIPTION_FAILED;
+      response = createJsonReplyString(false, errorCode, errorText);
+  }
+  else {
+      errorText = getErrorTextFromErrorCode(errorCode);
+      response = createJsonReplyString(false, errorCode, errorText);
+  }
+
+  pbnjson::JValue responsePayload = pbnjson::Object();
+  std::string target = "/media/internal/.mediaSession/";
+
+  pbnjson::JObject responseObj;
+
+  responseObj.put("target", "https://storage.googleapis.com/media-session/sintel/artwork-128.png");
+  responseObj.put("targetDir", target);
+  responseObj.put("subscribe", true);
+  responsePayload.put("returnValue", true);
+
+  response = responsePayload.stringify();
+
+  if (!LSSubscriptionReply(lsHandle_,"getMediaCoverArtPath" , responsePayload.stringify().c_str(), &lserror))
+  {
+      PMLOG_ERROR(CONST_MODULE_MCS,"%s LSSubscriptionReply failed", __FUNCTION__);
+      errorCode = MCS_ERROR_SUBSCRIPTION_REPLY_FAILED;
+      errorText = CSTR_SUBSCRIPTION_REPLY_FAILED;
+      response = createJsonReplyString(false, errorCode, errorText);
+  }
+
+  PMLOG_INFO(CONST_MODULE_MCS, "%s response : %s", __FUNCTION__, response.c_str());
+  request.respond(response.c_str());
+
+  return true;
+}
+
 bool MediaControlService::setMediaMetaData(LSMessage& message) {
   PMLOG_INFO(CONST_MODULE_MCS, "%s IN", __FUNCTION__);
 
@@ -1191,6 +1260,7 @@ bool MediaControlService::receiveMediaPlaybackInfo (LSMessage & message){
   /*get mediaId from displayId*/
   std::string mediaId = ptrMediaSessionMgr_->getMediaIdFromDisplayId(displayId);
   if(mediaId.c_str()){
+    int errorCode = MCS_ERROR_NO_ERROR;
     pbnjson::JValue responsePayload = pbnjson::Object();
     if(eventType == "playPosition" || eventType.empty()){
       std::string playPosition;
@@ -1218,10 +1288,38 @@ bool MediaControlService::receiveMediaPlaybackInfo (LSMessage & message){
     }
     if(!eventType.empty())
       responsePayload.put("eventType", eventType);
+      responsePayload.put("displayId", displayId);
+      responsePayload.put("returnValue", true);
+      responsePayload.put("subscribed", true);
 
-    responsePayload.put("displayId", displayId);
-    responsePayload.put("returnValue", true);
-    responsePayload.put("subscribed", true);
+    if (ptrMediaSessionMgr_) {
+      std::vector<mediaCoverArt> objCoverArt;
+
+      pbnjson::JValue coverArtArray = pbnjson::Array();
+
+      errorCode = ptrMediaSessionMgr_->getMediaCoverArt(mediaId, objCoverArt);
+      if (errorCode == MCS_ERROR_NO_ERROR)
+      {
+        for (auto &element : objCoverArt)
+        {
+            pbnjson::JValue coverArtItem = pbnjson::Object();
+
+            coverArtItem.put("src", element.getSource());
+            coverArtItem.put("type", element.getType());
+
+            pbnjson::JValue sizeObj = pbnjson::Object();
+            coverArtSize size = element.getSize();
+
+            sizeObj.put("width", size.width);
+            sizeObj.put("height", size.height);
+            coverArtItem.put("size", sizeObj);
+
+            coverArtArray.append(coverArtItem);
+        }
+      }
+      responsePayload.put("coverArt", coverArtArray);
+    }
+
     PMLOG_INFO(CONST_MODULE_MCS, "%s send subscription response :%s", __FUNCTION__, responsePayload.stringify().c_str());
     /*LSSubscriptionReply for receiveMediaPlaybackInfo*/
     CLSError lserror;
@@ -1291,6 +1389,86 @@ bool MediaControlService::injectMediaKeyEvent(LSMessage &message) {
     PMLOG_ERROR(CONST_MODULE_MCS,"%s LSSubscriptionReply failed", __FUNCTION__);
     errorCode = MCS_ERROR_SUBSCRIPTION_REPLY_FAILED;
     errorText = CSTR_SUBSCRIPTION_REPLY_FAILED;
+    response = createJsonReplyString(false, errorCode, errorText);
+  }
+
+  PMLOG_INFO(CONST_MODULE_MCS, "%s response : %s", __FUNCTION__, response.c_str());
+  request.respond(response.c_str());
+
+  return true;
+}
+
+bool MediaControlService::setMediaCoverArt(LSMessage& message) {
+  PMLOG_INFO(CONST_MODULE_MCS, "%s IN", __FUNCTION__);
+
+  LSMessageJsonParser msg(&message,STRICT_SCHEMA(PROPS_2(REQUIRED(mediaId, string), \
+  REQUIRED(coverArt, array)) REQUIRED_2(mediaId, coverArt)));
+
+  LS::Message request(&message);
+  int errorCode = MCS_ERROR_NO_ERROR;
+  std::string errorText;
+  std::string response;
+
+  if (!msg.parse(__FUNCTION__)) {
+    PMLOG_ERROR(CONST_MODULE_MCS, "%s Parsing failed", __FUNCTION__);
+    errorCode = MCS_ERROR_PARSING_FAILED;
+    errorText = CSTR_PARSING_ERROR;
+    response = createJsonReplyString(false, errorCode, errorText);
+    request.respond(response.c_str());
+    return true;
+  }
+
+  pbnjson::JValue payload = msg.get();
+  std::string mediaId = payload["mediaId"].asString();
+
+  PMLOG_INFO(CONST_MODULE_MCS,"mediaId : %s", mediaId.c_str());
+
+  response = createJsonReplyString(true);
+  pbnjson::JValue coverArt = payload["coverArt"];
+  if (!coverArt.isArray()) {
+   PMLOG_ERROR(CONST_MODULE_MCS,"%s coverArt is not available", __FUNCTION__);
+    return true;
+  }
+  std::vector<mediaCoverArt> coverArtData;
+  for (int i = 0; i < coverArt.arraySize(); i++) {
+    std::string coverArtSrc  = coverArt[i]["src"].asString();
+    std::string coverArtType = coverArt[i]["type"].asString();
+
+    coverArtSize size = {0};
+    pbnjson::JValue coverArtSize = coverArt[i]["size"];
+    size.width = coverArtSize["width"].asNumber<int>();
+    size.height = coverArtSize["height"].asNumber<int>();
+
+    PMLOG_INFO(CONST_MODULE_MCS, "Cover Art src : %s, type : %s, size : %dx%d", coverArtSrc.c_str(), coverArtType.c_str(), size.width, size.width);
+
+    mediaCoverArt objCoverArt(coverArtSrc, coverArtType, size);
+    coverArtData.push_back(objCoverArt);
+  }
+
+  if(ptrMediaSessionMgr_)
+    errorCode = ptrMediaSessionMgr_->setMediaCoverArt(mediaId, coverArtData);
+
+  if(MCS_ERROR_NO_ERROR == errorCode) {
+    //Create response to share cover art details to subscribed client
+    pbnjson::JValue responsePayload = pbnjson::Object();
+    responsePayload.put("displayId", 0);
+    responsePayload.put("subscribed", true);
+    responsePayload.put("coverArt", coverArt);
+    responsePayload.put("eventType", "coverArt");
+    responsePayload.put("returnValue", true);
+
+    PMLOG_INFO(CONST_MODULE_MCS, "%s send subscription response :%s", __FUNCTION__, responsePayload.stringify().c_str());
+
+    /*Reply coverArt details to receiveMediaPlaybackInfo*/
+    CLSError lserror;
+    if (!LSSubscriptionReply(lsHandle_,"receiveMediaPlaybackInfo" , responsePayload.stringify().c_str(), &lserror)){
+      PMLOG_ERROR(CONST_MODULE_MCS,"%s LSSubscriptionReply failed", __FUNCTION__);
+      errorCode = MCS_ERROR_SUBSCRIPTION_REPLY_FAILED;
+      errorText = CSTR_SUBSCRIPTION_REPLY_FAILED;
+      response = createJsonReplyString(false, errorCode, errorText);
+    }
+  } else {
+    errorText = getErrorTextFromErrorCode(errorCode);
     response = createJsonReplyString(false, errorCode, errorText);
   }
 

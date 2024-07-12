@@ -1,4 +1,4 @@
-// Copyright (c) 2020 LG Electronics, Inc.
+// Copyright (c) 2020-2024 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -92,6 +92,19 @@ int MediaSessionManager::getMediaMetaData(const std::string& mediaId,
   return MCS_ERROR_INVALID_MEDIAID;
 }
 
+int MediaSessionManager::getMediaCoverArt(const std::string& mediaId,
+                                           std::vector<mediaCoverArt>& objCoverArt) {
+  PMLOG_INFO(CONST_MODULE_MSM, "%s mediaId : %s", __FUNCTION__, mediaId.c_str());
+  const auto& itr = mapMediaSessionInfo_.find(mediaId);
+  if(itr != mapMediaSessionInfo_.end()) {
+    objCoverArt = itr->second.getMediaCoverArtObj();
+    return MCS_ERROR_NO_ERROR;
+  }
+
+  PMLOG_ERROR(CONST_MODULE_MSM, "%s MediaId doesnt exists", __FUNCTION__);
+  return MCS_ERROR_INVALID_MEDIAID;
+}
+
 int MediaSessionManager::getMediaSessionInfo(const std::string& mediaId,
                                               mediaSession& objMediaSession) {
   PMLOG_INFO(CONST_MODULE_MSM, "%s mediaId : %s", __FUNCTION__, mediaId.c_str());
@@ -154,6 +167,19 @@ int MediaSessionManager::setMediaMetaData(const std::string& mediaId,
   if(itr != mapMediaSessionInfo_.end()) {
     //save metadata info
     itr->second.setMetaData(objMetaData);
+    return MCS_ERROR_NO_ERROR;
+  }
+  PMLOG_ERROR(CONST_MODULE_MSM, "%s MediaId doesnt exists", __FUNCTION__);
+  return MCS_ERROR_INVALID_MEDIAID;
+}
+
+int MediaSessionManager::setMediaCoverArt(const std::string& mediaId,
+                                           const std::vector<mediaCoverArt>& objCoverArt) {
+  PMLOG_INFO(CONST_MODULE_MSM, "%s mediaId : %s", __FUNCTION__, mediaId.c_str());
+  const auto& itr = mapMediaSessionInfo_.find(mediaId);
+  if(itr != mapMediaSessionInfo_.end()) {
+    //save cover art info
+    itr->second.setCoverArt(objCoverArt);
     return MCS_ERROR_NO_ERROR;
   }
   PMLOG_ERROR(CONST_MODULE_MSM, "%s MediaId doesnt exists", __FUNCTION__);

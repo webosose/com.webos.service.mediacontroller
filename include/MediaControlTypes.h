@@ -1,4 +1,4 @@
-// Copyright (c) 2020 LG Electronics, Inc.
+// Copyright (c) 2020-2024 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -135,6 +135,52 @@ public:
   }
 };
 
+typedef struct {
+  int width;
+  int height;
+
+  //TODO Overload the == operator to compare two coverArtSize struct
+  //bool operator!=(const coverArtSize& other) const {
+  //  return (width != other.width) || (height != other.height);
+  //}
+
+} coverArtSize;
+
+class mediaCoverArt {
+private:
+  std::string  src_;
+  std::string  type_;
+  coverArtSize size_;
+public:
+  mediaCoverArt() :
+    src_(""),
+    type_(""),
+    size_({0}) {}
+  mediaCoverArt(const std::string& src, const std::string& type,
+                const coverArtSize& size) :
+    src_(src),
+    type_(type),
+    size_(size) {}
+
+  std::string getSource() const {return src_;}
+  std::string getType() const {return type_;}
+  coverArtSize getSize() const {return size_;}
+
+  void setSource(const std::string& src) {
+    if(!src.empty() && src_ != src)
+      src_ = src;
+  }
+  void setType(const std::string& type) {
+    if(!type.empty() && type_ != type)
+      type_ = type;
+  }
+  void setSize(const coverArtSize& size) {
+
+    size_.width = size.width;
+    size_.height = size.height;
+  }
+};
+
 class mediaSession {
 private:
   std::string mediaId_;
@@ -143,6 +189,7 @@ private:
   std::string muteStatus_;
   std::string playPosition_;
   mediaMetaData objMetaData_;
+  std::vector<mediaCoverArt> objCoverArt_;
 public:
   mediaSession() :
     playStatus_("PLAYSTATE_NONE"),
@@ -168,6 +215,8 @@ public:
   }
   mediaMetaData getMediaMetaDataObj() const { return objMetaData_; }
 
+  std::vector<mediaCoverArt> getMediaCoverArtObj() const { return objCoverArt_; }
+
   void setMediaId(const std::string& mediaId) {
     mediaId_ = mediaId;
   }
@@ -191,6 +240,10 @@ public:
     objMetaData_.setGenre(objMetaData.getGenre());
     objMetaData_.setTrackNumber(objMetaData.getTrackNumber());
     objMetaData_.setVolume(objMetaData.getVolume());
+  }
+
+  void setCoverArt(const std::vector<mediaCoverArt>& objCoverArt) {
+    objCoverArt_ = objCoverArt;
   }
 };
 

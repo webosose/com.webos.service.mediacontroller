@@ -1,4 +1,4 @@
-// Copyright (c) 2020 LG Electronics, Inc.
+// Copyright (c) 2020-2024 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -41,6 +41,8 @@ public:
   int removeMediaSession (const std::string& mediaId);
   int getMediaMetaData(const std::string& mediaId,
                        mediaMetaData& objMetaData);
+  int getMediaCoverArt(const std::string& mediaId,
+                       std::vector<mediaCoverArt>& objMetaData);
   int getMediaSessionInfo(const std::string& mediaId,
                           mediaSession& objMediaSession);
   int getMediaPlayStatus(const std::string& mediaId,
@@ -51,6 +53,8 @@ public:
                          std::string& playPosition);
   int setMediaMetaData(const std::string& mediaId,
                        const mediaMetaData& objMetaData);
+  int setMediaCoverArt(const std::string& mediaId,
+                       const std::vector<mediaCoverArt>& objCoverArt);
   int setMediaPlayStatus(const std::string& mediaId,
                          const std::string& playStatus);
   int setMediaMuteStatus(const std::string& mediaId,
