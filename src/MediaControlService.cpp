@@ -165,7 +165,7 @@ bool MediaControlService::onBTAdapterQueryCb(LSHandle *lshandle, LSMessage *mess
         if (!LSCall(obj->lsHandle_,
                     cstrBTDeviceGetStatus.c_str(),
                     payloadL.c_str(),
-                    &MediaControlService::onBTDeviceGetStatusCb,
+                    &onBTDeviceGetStatusCbWrapper,
                     ctx, NULL, &lserror))
           PMLOG_ERROR(CONST_MODULE_MCS,"%s : LSCall failed for BT device/getStatus", __FUNCTION__);
       }

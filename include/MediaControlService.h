@@ -77,3 +77,7 @@ private:
 };
 
 #endif /*MEDIA_CONTROL_SERVICE_H_*/
+
+extern "C" bool onBTDeviceGetStatusCbWrapper(LSHandle *lshandle, LSMessage *message, void *ctx) {
+    return MediaControlService::onBTDeviceGetStatusCb(lshandle, message, ctx);
+}
