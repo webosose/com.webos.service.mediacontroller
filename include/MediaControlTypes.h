@@ -35,11 +35,15 @@ const std::string CSTR_SESSION_INVALID_MUTE_STATUS = "Invalid Mute Status";
 const std::string CSTR_SUBSCRIPTION_FAILED = "LSSubscriptionAdd failed";
 const std::string CSTR_SUBSCRIPTION_REPLY_FAILED = "LSSubscriptionReply failed";
 const std::string CSTR_EMPTY = "";
+const std::string CTSR_INVALID_DISPLAYID = "Invalid displayId";
+const std::string CTSR_INVALID_EVENT = "Invalid Event";
 
 #define CONST_MODULE_MCS "MediaControlService"
 #define CONST_MODULE_MCP "MediaControlPrivate"
 #define CONST_MODULE_MSM "MediaSessionManager"
 #define CONST_MODULE_RR  "RequestReceiver"
+#define CONST_MODULE_MCD  "MediaControlDownloader"
+#define CONST_MODULE_MCFM  "MediaControlFileManager"
 
 #define SET 1
 #define RESET 0
@@ -59,7 +63,9 @@ enum MCSErrorCode {
   MCS_ERROR_SUBSCRIPTION_REPLY_FAILED,
   MCS_ERROR_SESSION_INVALID_PLAY_STATE,
   MCS_ERROR_SESSION_INVALID_MUTE_STATUS,
-  MCS_ERROR_NO_ERROR
+  MCS_ERROR_NO_ERROR,
+  MCS_ERROR_INVALID_DISPLAYID,
+  MCS_ERROR_INVALID_EVENT
 };
 
 enum MediaPlayState {
@@ -148,23 +154,22 @@ typedef struct {
 
 class mediaCoverArt {
 private:
-  std::string  src_;
-  std::string  type_;
-  coverArtSize size_;
+  std::string src_;
+  std::string type_;
+  std::vector<coverArtSize> size_;
 public:
   mediaCoverArt() :
     src_(""),
-    type_(""),
-    size_({0}) {}
+    type_("") {}
   mediaCoverArt(const std::string& src, const std::string& type,
-                const coverArtSize& size) :
+                const std::vector<coverArtSize> size) :
     src_(src),
     type_(type),
     size_(size) {}
 
   std::string getSource() const {return src_;}
   std::string getType() const {return type_;}
-  coverArtSize getSize() const {return size_;}
+  std::vector<coverArtSize> getSize() const {return size_;}
 
   void setSource(const std::string& src) {
     if(!src.empty() && src_ != src)
@@ -174,10 +179,8 @@ public:
     if(!type.empty() && type_ != type)
       type_ = type;
   }
-  void setSize(const coverArtSize& size) {
-
-    size_.width = size.width;
-    size_.height = size.height;
+  void setSize(const std::vector<coverArtSize> size) {
+    size_ = size;
   }
 };
 
@@ -282,6 +285,10 @@ static std::string getErrorTextFromErrorCode(const int& errorCode) {
       return CSTR_SUBSCRIPTION_FAILED;
     case MCS_ERROR_SUBSCRIPTION_REPLY_FAILED:
       return CSTR_SUBSCRIPTION_REPLY_FAILED;
+    case MCS_ERROR_INVALID_DISPLAYID:
+      return CTSR_INVALID_DISPLAYID;
+    case MCS_ERROR_INVALID_EVENT:
+      return CTSR_INVALID_EVENT;
     default:
       return CSTR_EMPTY;
   }

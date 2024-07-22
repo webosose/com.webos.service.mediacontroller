@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2022 LG Electronics, Inc.
+# Copyright (c) 2020-2024 LG Electronics, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,6 +24,10 @@ webos_modules_init(1 6 3)
 webos_component(1 0 0)
 
 include(FindPkgConfig)
+
+pkg_check_modules(CURL REQUIRED libcurl)
+include_directories(${CURL_INCLUDE_DIRS})
+webos_add_compiler_flags(ALL ${CURL_CFLAGS_OTHER})
 
 pkg_check_modules(GLIB2 REQUIRED glib-2.0)
 include_directories(${GLIB2_INCLUDE_DIRS})
@@ -62,6 +66,9 @@ include_directories(${CMAKE_SOURCE_DIR}/files/systemd/)
 
 include_directories(${CMAKE_SOURCE_DIR}/include/)
 
+include_directories(${CMAKE_SOURCE_DIR}/src/fileManager/)
+include_directories(${CMAKE_SOURCE_DIR}/src/fileDownloader/)
+
 add_subdirectory(${CMAKE_SOURCE_DIR}/test/)
 
 set(SRC_LIST
@@ -70,6 +77,11 @@ set(SRC_LIST
     ${CMAKE_SOURCE_DIR}/src/MediaControlPrivate.cpp
     ${CMAKE_SOURCE_DIR}/src/RequestReceiver.cpp
     ${CMAKE_SOURCE_DIR}/src/Lsutils.cpp
+    ${CMAKE_SOURCE_DIR}/src/fileDownloader/Downloader.cpp
+    ${CMAKE_SOURCE_DIR}/src/fileDownloader/DownloaderFactory.cpp
+    ${CMAKE_SOURCE_DIR}/src/fileManager/FileManager.cpp
+    ${CMAKE_SOURCE_DIR}/src/fileManager/CacheManager.cpp
+    ${CMAKE_SOURCE_DIR}/src/fileManager/FileSystem.cpp
    )
 
 add_executable(${PROJECT_NAME}
@@ -79,7 +91,8 @@ target_link_libraries(${PROJECT_NAME}
                       ${GLIB2_LDFLAGS}
                       ${PBNJSON_CPP_LDFLAGS}
                       ${LS2++_LDFLAGS}
-                      ${PMLOGLIB_LDFLAGS})
+                      ${PMLOGLIB_LDFLAGS}
+                      ${CURL_LDFLAGS})
 
 #MediaControllerServiceTest project exe
 set (SRC_TEST ${CMAKE_SOURCE_DIR}/test/MediaControllerServiceTest.cpp)

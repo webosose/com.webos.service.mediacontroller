@@ -24,13 +24,18 @@
 #include <vector>
 #include "MediaControlTypes.h"
 #include "RequestReceiver.h"
+#include <luna-service2/lunaservice.hpp>
+#include "FileManager.h"
 
 class MediaSessionManager
 {
 private:
   MediaSessionManager();
+  ~MediaSessionManager();
   std::map<std::string, mediaSession> mapMediaSessionInfo_;
   RequestReceiver objRequestRcvr_;
+  LSHandle *lshandle_ = nullptr;
+  FileManager *fileManager;
 
 public:
   static MediaSessionManager &getInstance();
@@ -67,6 +72,9 @@ public:
   bool validatePlayStatus(const std::string& playStatus);
   int getDisplayIdForMedia(const std::string& mediaId);
   std::string getMediaIdFromDisplayId(const int& displayId);
+  int coverArtDownload(const std::string& mediaId, const std::vector<std::string> uri);
+  bool download(const std::string& uri);
+  void setLSHandle(LSHandle *lshandle) { lshandle_ = lshandle;};
 };
 
 #endif /*MEDIA_SESSION_MANAGER_H_*/
