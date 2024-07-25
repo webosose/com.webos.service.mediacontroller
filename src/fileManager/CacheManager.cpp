@@ -48,7 +48,7 @@ void CacheManager::updateAccessTime(const std::string &uri)
 
 void CacheManager::evictLRUFiles()
 {
-    PMLOG_INFO(CONST_MODULE_MCFM, "%s currentSize: %d, MAX_SIZE : %d", __FUNCTION__, currentSize, MAX_SIZE);
+    PMLOG_INFO(CONST_MODULE_MCFM, "%s currentSize: %lu, MAX_SIZE : %lu", __FUNCTION__, currentSize, MAX_SIZE);
 
     // Evict files until the total size is within the limit
     while (currentSize > MAX_SIZE)

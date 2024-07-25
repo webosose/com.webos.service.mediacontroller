@@ -348,7 +348,7 @@ int MediaSessionManager::coverArtDownload(const std::string& mediaId, const std:
 
   for(auto &uri : uris)
   {
-    std::thread tidDownload = std::thread{[this, uri]() { this->download(uri); }};
+    std::thread tidDownload = std::thread(&MediaSessionManager::download, this, uri);
     tidDownload.detach();
   }
 

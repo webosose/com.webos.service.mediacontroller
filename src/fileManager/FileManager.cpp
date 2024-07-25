@@ -31,7 +31,7 @@ std::string FileManager::getURI(const std::string &uri, const std::string &outpu
         std::string filePath = cacheManager.getFile(uri);
         if (FileSystem::fileExists(filePath))
         {
-            PMLOG_INFO(CONST_MODULE_MCFM, "fileExists: YES filePath: %s", filePath);
+            PMLOG_INFO(CONST_MODULE_MCFM, "fileExists: YES filePath: %s", filePath.c_str());
             cacheManager.updateAccessTime(uri);
             return filePath;
         }

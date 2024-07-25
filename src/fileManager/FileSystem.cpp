@@ -39,22 +39,22 @@ size_t FileSystem::getFileSize(const std::string &path)
     struct stat buffer;
     if (stat(path.c_str(), &buffer) == 0)
     {
-        PMLOG_INFO(CONST_MODULE_MCFM, "file : %s, size : %d", path, buffer.st_size);
+        PMLOG_INFO(CONST_MODULE_MCFM, "file : %s, size : %lu", path.c_str(), buffer.st_size);
         return buffer.st_size;
     }
-    PMLOG_INFO(CONST_MODULE_MCFM, "file : %s, size : %d", path, buffer.st_size);
+    PMLOG_INFO(CONST_MODULE_MCFM, "file : %s, size : %lu", path.c_str(), buffer.st_size);
     return 0;
 }
 
 void FileSystem::deleteFile(const std::string &path)
 {
-    PMLOG_INFO(CONST_MODULE_MCFM, "Deleting %s", path);
+    PMLOG_INFO(CONST_MODULE_MCFM, "Deleting %s", path.c_str());
     if (!fileExists(path))
     {
         return;
     }
     if (remove(path.c_str()) != 0) {
-       PMLOG_INFO(CONST_MODULE_MCFM, "remove failed : %s", path);
+       PMLOG_INFO(CONST_MODULE_MCFM, "remove failed : %s", path.c_str());
        return;
     }
 }

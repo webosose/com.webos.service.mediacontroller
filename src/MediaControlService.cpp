@@ -80,7 +80,7 @@ MediaControlService::MediaControlService()
   if(!rev) {
     // Create the directory with 755 permissions
     if (mkdir(MEDIA_SESSION_FOLDER.c_str(), 0755) == -1) {
-      PMLOG_ERROR(CONST_MODULE_MCS,"%s failed to create %s", __FUNCTION__, MEDIA_SESSION_FOLDER);
+      PMLOG_ERROR(CONST_MODULE_MCS,"%s failed to create %s", __FUNCTION__, MEDIA_SESSION_FOLDER.c_str());
     }
   } else {
     if (deleteAllFilesInDirectory(MEDIA_SESSION_FOLDER)) {
