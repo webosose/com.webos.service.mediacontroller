@@ -49,8 +49,6 @@ static bool deleteAllFilesInDirectory(const std::string& path) {
 
   struct dirent* entry;
   while ((entry = readdir(dir)) != nullptr) {
-    std::string filePath = path + "/" + entry->d_name;
-
     // Skip the "." and ".." entries
     if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {
       continue;
@@ -58,8 +56,8 @@ static bool deleteAllFilesInDirectory(const std::string& path) {
 
     // Check if it's a file
     struct stat info;
-    if (stat(filePath.c_str(), &info) == 0 && S_ISREG(info.st_mode)) {
-      if (remove(filePath.c_str()) != 0) {
+    if (fstatat(dirfd(dir), entry->d_name, &info, 0) == 0 && S_ISREG(info.st_mode)) {
+      if (unlinkat(dirfd(dir), entry->d_name, 0) != 0) {
         closedir(dir);
         return false;
       }

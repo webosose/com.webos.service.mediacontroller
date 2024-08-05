@@ -1342,25 +1342,25 @@ bool MediaControlService::receiveMediaPlaybackInfo (LSMessage & message){
     if(eventType == "playPosition" || eventType.empty()){
       std::string playPosition;
       if(ptrMediaSessionMgr_)
-        errorCode = ptrMediaSessionMgr_->getMediaPlayPosition(mediaId, playPosition);
+        ptrMediaSessionMgr_->getMediaPlayPosition(mediaId, playPosition);
       responsePayload.put("playPosition", playPosition);
 
     }
     if(eventType == "playStatus" ||eventType.empty()){
       std::string playStatus;
       if(ptrMediaSessionMgr_)
-        errorCode = ptrMediaSessionMgr_->getMediaPlayStatus(mediaId, playStatus);
+        ptrMediaSessionMgr_->getMediaPlayStatus(mediaId, playStatus);
       responsePayload.put("playStatus", playStatus);
     }
     if(eventType == "muteStatus" || eventType.empty()){
       std::string muteStatus;
       if(ptrMediaSessionMgr_)
-        errorCode = ptrMediaSessionMgr_->getMediaMuteStatus(mediaId, muteStatus);
+        ptrMediaSessionMgr_->getMediaMuteStatus(mediaId, muteStatus);
       responsePayload.put("muteStatus", muteStatus);
     }
     if(eventType == "mediaMetaData" || eventType.empty()){
       pbnjson::JObject metaDataObj;
-      errorCode = updateMetaDataResponse(mediaId, metaDataObj);
+      updateMetaDataResponse(mediaId, metaDataObj);
       responsePayload.put("mediaMetaData", metaDataObj);
     }
     if(eventType == "coverArt" || eventType.empty()) {

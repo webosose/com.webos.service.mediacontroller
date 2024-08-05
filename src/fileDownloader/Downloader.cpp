@@ -102,7 +102,7 @@ std::string Downloader::determineFinalOutputPath(const std::string& url, const s
     struct stat info;
     if (stat(outputPath.c_str(), &info) != 0) {
         // Path does not exist or is not accessible
-        if (outputPath.back() == '/' || outputPath.back() == '\\') {
+        if (!outputPath.empty() && (outputPath.back() == '/' || outputPath.back() == '\\')) {
             // If outputPath ends with a slash, it's intended to be a directory
             throw std::runtime_error("Directory does not exist: " + outputPath);
         }
