@@ -20,7 +20,7 @@
 
 MediaControlPrivate::MediaControlPrivate() :
   mapDeviceInfo_(), playStatus_(false), muteStatus_(false),
-  playPosition_(false), mediaMetaData_(false) {
+  playPosition_(false), mediaMetaData_(false), coverArt_(false) {
 }
 
 MediaControlPrivate& MediaControlPrivate::getInstance() {

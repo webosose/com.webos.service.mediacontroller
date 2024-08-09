@@ -1311,11 +1311,14 @@ bool MediaControlService::receiveMediaPlaybackInfo (LSMessage & message){
     ptrMediaControlPrivate_->playPosition_ = true;
   }else if (!strcmp(eventType.c_str(), "mediaMetaData")){
     ptrMediaControlPrivate_->mediaMetaData_ = true;
+  }else if (!strcmp(eventType.c_str(), "coverArt")){
+    ptrMediaControlPrivate_->coverArt_ = true;
   }else if (!strcmp(eventType.c_str(), CSTR_EMPTY.c_str())){
     ptrMediaControlPrivate_->playStatus_ = true;
     ptrMediaControlPrivate_->muteStatus_ = true;
     ptrMediaControlPrivate_->playPosition_ = true;
     ptrMediaControlPrivate_->mediaMetaData_ = true;
+    ptrMediaControlPrivate_->coverArt_ = true;
   }
 
   PMLOG_INFO(CONST_MODULE_MCS, "%s displayId : %d subscribe : %d  eventType : %s",__FUNCTION__, displayId, subscribed, eventType.c_str());
@@ -1574,23 +1577,25 @@ bool MediaControlService::setMediaCoverArt(LSMessage& message) {
     errorCode = ptrMediaSessionMgr_->setMediaCoverArt(mediaId, coverArtData);
 
   if(MCS_ERROR_NO_ERROR == errorCode) {
-    //Create response to share cover art details to subscribed client
-    pbnjson::JValue responsePayload = pbnjson::Object();
-    responsePayload.put("displayId", 0);
-    responsePayload.put("subscribed", true);
-    responsePayload.put("coverArt", coverArt);
-    responsePayload.put("eventType", "coverArt");
-    responsePayload.put("returnValue", true);
+    if(ptrMediaControlPrivate_->coverArt_) {
+      //Create response to share cover art details to subscribed client
+      pbnjson::JValue responsePayload = pbnjson::Object();
+      responsePayload.put("displayId", 0);
+      responsePayload.put("subscribed", true);
+      responsePayload.put("coverArt", coverArt);
+      responsePayload.put("eventType", "coverArt");
+      responsePayload.put("returnValue", true);
 
-    PMLOG_INFO(CONST_MODULE_MCS, "%s send subscription response :%s", __FUNCTION__, responsePayload.stringify().c_str());
+      PMLOG_INFO(CONST_MODULE_MCS, "%s send subscription response :%s", __FUNCTION__, responsePayload.stringify().c_str());
 
-    /*Reply coverArt details to receiveMediaPlaybackInfo*/
-    CLSError lserror;
-    if (!LSSubscriptionReply(lsHandle_,"receiveMediaPlaybackInfo" , responsePayload.stringify().c_str(), &lserror)){
-      PMLOG_ERROR(CONST_MODULE_MCS,"%s LSSubscriptionReply failed", __FUNCTION__);
-      errorCode = MCS_ERROR_SUBSCRIPTION_REPLY_FAILED;
-      errorText = CSTR_SUBSCRIPTION_REPLY_FAILED;
-      response = createJsonReplyString(false, errorCode, errorText);
+      /*Reply coverArt details to receiveMediaPlaybackInfo*/
+      CLSError lserror;
+      if (!LSSubscriptionReply(lsHandle_,"receiveMediaPlaybackInfo" , responsePayload.stringify().c_str(), &lserror)){
+        PMLOG_ERROR(CONST_MODULE_MCS,"%s LSSubscriptionReply failed", __FUNCTION__);
+        errorCode = MCS_ERROR_SUBSCRIPTION_REPLY_FAILED;
+        errorText = CSTR_SUBSCRIPTION_REPLY_FAILED;
+        response = createJsonReplyString(false, errorCode, errorText);
+      }
     }
   } else {
     errorText = getErrorTextFromErrorCode(errorCode);
