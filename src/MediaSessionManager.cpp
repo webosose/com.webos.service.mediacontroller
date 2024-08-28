@@ -115,6 +115,19 @@ int MediaSessionManager::getMediaCoverArt(const std::string& mediaId,
   return MCS_ERROR_INVALID_MEDIAID;
 }
 
+int MediaSessionManager::getActionList(const std::string& mediaId,
+                                           std::vector<std::string>& objActionList) {
+  PMLOG_INFO(CONST_MODULE_MSM, "%s mediaId : %s", __FUNCTION__, mediaId.c_str());
+  const auto& itr = mapMediaSessionInfo_.find(mediaId);
+  if(itr != mapMediaSessionInfo_.end()) {
+    objActionList = itr->second.getActionObj();
+    return MCS_ERROR_NO_ERROR;
+  }
+
+  PMLOG_ERROR(CONST_MODULE_MSM, "%s MediaId doesnt exists", __FUNCTION__);
+  return MCS_ERROR_INVALID_MEDIAID;
+}
+
 int MediaSessionManager::getMediaSessionInfo(const std::string& mediaId,
                                               mediaSession& objMediaSession) {
   PMLOG_INFO(CONST_MODULE_MSM, "%s mediaId : %s", __FUNCTION__, mediaId.c_str());
@@ -190,6 +203,19 @@ int MediaSessionManager::setMediaCoverArt(const std::string& mediaId,
   if(itr != mapMediaSessionInfo_.end()) {
     //save cover art info
     itr->second.setCoverArt(objCoverArt);
+    return MCS_ERROR_NO_ERROR;
+  }
+  PMLOG_ERROR(CONST_MODULE_MSM, "%s MediaId doesnt exists", __FUNCTION__);
+  return MCS_ERROR_INVALID_MEDIAID;
+}
+
+int MediaSessionManager::setMediaAction(const std::string& mediaId,
+                                           const std::vector<std::string>& mediaAction) {
+  PMLOG_INFO(CONST_MODULE_MSM, "%s mediaId : %s", __FUNCTION__, mediaId.c_str());
+  const auto& itr = mapMediaSessionInfo_.find(mediaId);
+  if(itr != mapMediaSessionInfo_.end()) {
+    //save action handler info
+    itr->second.setAction(mediaAction);
     return MCS_ERROR_NO_ERROR;
   }
   PMLOG_ERROR(CONST_MODULE_MSM, "%s MediaId doesnt exists", __FUNCTION__);

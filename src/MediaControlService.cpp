@@ -61,6 +61,7 @@ MediaControlService::MediaControlService()
   LS_CATEGORY_METHOD(receiveMediaPlaybackInfo)
   LS_CATEGORY_METHOD(injectMediaKeyEvent)
   LS_CATEGORY_METHOD(setMediaCoverArt)
+  LS_CATEGORY_METHOD(setSupportedActions)
 #if USE_TEST_METHOD
   LS_CATEGORY_METHOD(testKeyEvent)
 #endif
@@ -618,6 +619,86 @@ bool MediaControlService::getMediaMetaData(LSMessage& message) {
   request.respond(response.c_str());
 
   return true;
+}
+
+bool MediaControlService::setSupportedActions(LSMessage& message) {
+  PMLOG_INFO(CONST_MODULE_MCS, "%s IN", __FUNCTION__);
+
+  LSMessageJsonParser msg(&message,STRICT_SCHEMA(PROPS_2(REQUIRED(mediaId, string), \
+  REQUIRED(supportedActions, array)) REQUIRED_2(mediaId, supportedActions)));
+
+  LS::Message request(&message);
+  int errorCode = MCS_ERROR_NO_ERROR;
+  std::string errorText;
+  std::string response;
+
+  if (!msg.parse(__FUNCTION__)) {
+    PMLOG_ERROR(CONST_MODULE_MCS, "%s Parsing failed", __FUNCTION__);
+    errorCode = MCS_ERROR_PARSING_FAILED;
+    errorText = CSTR_PARSING_ERROR;
+    response = createJsonReplyString(false, errorCode, errorText);
+    request.respond(response.c_str());
+    return false;
+  }
+
+  response = createJsonReplyString(true);
+  pbnjson::JValue payload = msg.get();
+  std::string mediaId = payload["mediaId"].asString();
+  pbnjson::JValue actions = payload["supportedActions"];
+
+  std::vector<std::string> enableActions;
+
+  if (!actions.isArray() || actions.arraySize() <= 0) {
+    errorCode = MCS_ERROR_PARSING_FAILED;
+    errorText = CSTR_PARSING_ERROR;
+    response  = createJsonReplyString(false, errorCode, errorText);
+    request.respond(response.c_str());
+    return false;
+  }
+
+  for (int i = 0; i < actions.arraySize(); i++) {
+     if(!actions[i].isString() || actions[i].asString() == "") {
+       errorCode = MCS_ERROR_PARSING_FAILED;
+       errorText = CSTR_PARSING_ERROR;
+       response  = createJsonReplyString(false, errorCode, errorText);
+       request.respond(response.c_str());
+       return false;
+     }
+     enableActions.push_back(actions[i].asString());
+  }
+
+  if(ptrMediaSessionMgr_)
+    errorCode = ptrMediaSessionMgr_->setMediaAction(mediaId, enableActions);
+
+  if(MCS_ERROR_NO_ERROR == errorCode) {
+    if(ptrMediaControlPrivate_->enableMediaAction_) {
+      //Create response to share cover art details to subscribed client
+      pbnjson::JValue responsePayload = pbnjson::Object();
+      responsePayload.put("displayId", 0);
+      responsePayload.put("supportedActions", actions);
+      responsePayload.put("returnValue", true);
+
+      PMLOG_INFO(CONST_MODULE_MCS, "%s send subscription response :%s", __FUNCTION__, responsePayload.stringify().c_str());
+
+      /*Reply coverArt details to receiveMediaPlaybackInfo*/
+      CLSError lserror;
+      if (!LSSubscriptionReply(lsHandle_,"receiveMediaPlaybackInfo" , responsePayload.stringify().c_str(), &lserror)){
+        PMLOG_ERROR(CONST_MODULE_MCS,"%s LSSubscriptionReply failed", __FUNCTION__);
+        errorCode = MCS_ERROR_SUBSCRIPTION_REPLY_FAILED;
+        errorText = CSTR_SUBSCRIPTION_REPLY_FAILED;
+        response = createJsonReplyString(false, errorCode, errorText);
+      }
+    }
+  } else {
+    errorText = getErrorTextFromErrorCode(errorCode);
+    response = createJsonReplyString(false, errorCode, errorText);
+  }
+
+  PMLOG_INFO(CONST_MODULE_MCS, "%s response : %s", __FUNCTION__, response.c_str());
+  request.respond(response.c_str());
+
+  return true;
+
 }
 
 bool MediaControlService::getMediaPlayStatus(LSMessage& message) {
@@ -1289,7 +1370,8 @@ bool MediaControlService::receiveMediaPlaybackInfo (LSMessage & message){
   std::string eventType = payload["eventType"].asString();
   if(strcmp(eventType.c_str(), "playStatus") && strcmp(eventType.c_str(), "muteStatus")
      && strcmp(eventType.c_str(), "playPosition") && strcmp(eventType.c_str(), "mediaMetaData")
-     && strcmp(eventType.c_str(), "coverArt") && !eventType.empty())
+     && strcmp(eventType.c_str(), "coverArt") && strcmp(eventType.c_str(), "supportedActions")
+     && !eventType.empty())
   {
     errorCode = MCS_ERROR_INVALID_EVENT;
     errorText = CTSR_INVALID_EVENT;
@@ -1313,12 +1395,15 @@ bool MediaControlService::receiveMediaPlaybackInfo (LSMessage & message){
     ptrMediaControlPrivate_->mediaMetaData_ = true;
   }else if (!strcmp(eventType.c_str(), "coverArt")){
     ptrMediaControlPrivate_->coverArt_ = true;
+  }else if (!strcmp(eventType.c_str(), "supportedActions")){
+    ptrMediaControlPrivate_->enableMediaAction_ = true;
   }else if (!strcmp(eventType.c_str(), CSTR_EMPTY.c_str())){
     ptrMediaControlPrivate_->playStatus_ = true;
     ptrMediaControlPrivate_->muteStatus_ = true;
     ptrMediaControlPrivate_->playPosition_ = true;
     ptrMediaControlPrivate_->mediaMetaData_ = true;
     ptrMediaControlPrivate_->coverArt_ = true;
+    ptrMediaControlPrivate_->enableMediaAction_ = true;
   }
 
   PMLOG_INFO(CONST_MODULE_MCS, "%s displayId : %d subscribe : %d  eventType : %s",__FUNCTION__, displayId, subscribed, eventType.c_str());
@@ -1395,6 +1480,22 @@ bool MediaControlService::receiveMediaPlaybackInfo (LSMessage & message){
         }
         responsePayload.put("coverArt", coverArtArray);
       }
+    }
+    if (eventType == "supportedActions" || eventType.empty()){
+      std::vector<std::string> objActionList;
+      pbnjson::JValue actionListArray = pbnjson::Array();
+
+      if(ptrMediaSessionMgr_) {
+        errorCode = ptrMediaSessionMgr_->getActionList(mediaId, objActionList);
+        if (errorCode == MCS_ERROR_NO_ERROR) {
+
+          for (auto &element : objActionList) {
+            actionListArray.append(pbnjson::JValue(element));
+          }
+        }
+        responsePayload.put("supportedActions", actionListArray);
+      }
+
     }
     if(!eventType.empty())
       responsePayload.put("eventType", eventType);

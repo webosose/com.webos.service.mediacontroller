@@ -50,6 +50,7 @@ public:
   bool getMediaSessionId(LSMessage &);
   bool getActiveMediaSessions(LSMessage &);
   bool getMediaCoverArtPath(LSMessage &);
+  bool setSupportedActions(LSMessage &);
   bool setMediaMetaData(LSMessage &);
   bool setMediaPlayStatus(LSMessage &);
   bool setMediaMuteStatus (LSMessage &);

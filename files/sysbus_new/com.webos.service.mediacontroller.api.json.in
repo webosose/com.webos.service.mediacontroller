@@ -16,7 +16,8 @@
     "com.webos.service.mediacontroller/setMediaPlayStatus",
     "com.webos.service.mediacontroller/setMediaMuteStatus",
     "com.webos.service.mediacontroller/setMediaPlayPosition",
-    "com.webos.service.mediacontroller/setMediaCoverArt"
+    "com.webos.service.mediacontroller/setMediaCoverArt",
+    "com.webos.service.mediacontroller/setSupportedActions"
   ],
   "mediacontroller.management": [
     "com.webos.service.mediacontroller/receiveMediaPlaybackInfo",

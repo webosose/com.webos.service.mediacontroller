@@ -32,6 +32,7 @@ public:
   bool playPosition_;
   bool mediaMetaData_;
   bool coverArt_;
+  bool enableMediaAction_;
   static MediaControlPrivate &getInstance();
 
   void setBTDeviceInfo(const BTDeviceInfo& objDevInfo);

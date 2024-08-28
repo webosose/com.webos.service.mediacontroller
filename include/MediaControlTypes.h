@@ -193,6 +193,8 @@ private:
   std::string playPosition_;
   mediaMetaData objMetaData_;
   std::vector<mediaCoverArt> objCoverArt_;
+  std::vector<std::string> enableActions_;
+
 public:
   mediaSession() :
     playStatus_("PLAYSTATE_NONE"),
@@ -219,6 +221,8 @@ public:
   mediaMetaData getMediaMetaDataObj() const { return objMetaData_; }
 
   std::vector<mediaCoverArt> getMediaCoverArtObj() const { return objCoverArt_; }
+
+  std::vector<std::string> getActionObj() const { return enableActions_; }
 
   void setMediaId(const std::string& mediaId) {
     mediaId_ = mediaId;
@@ -247,6 +251,10 @@ public:
 
   void setCoverArt(const std::vector<mediaCoverArt>& objCoverArt) {
     objCoverArt_ = objCoverArt;
+  }
+
+  void setAction(const std::vector<std::string>& enableActions) {
+    enableActions_ = enableActions;
   }
 };
 

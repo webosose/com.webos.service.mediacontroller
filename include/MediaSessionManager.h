@@ -40,7 +40,7 @@ private:
 public:
   static MediaSessionManager &getInstance();
   int addMediaSession (const std::string& mediaId,
-                        const std::string& appId);
+                       const std::string& appId);
   int activateMediaSession (const std::string& mediaId);
   int deactivateMediaSession (const std::string& mediaId);
   int removeMediaSession (const std::string& mediaId);
@@ -48,6 +48,8 @@ public:
                        mediaMetaData& objMetaData);
   int getMediaCoverArt(const std::string& mediaId,
                        std::vector<mediaCoverArt>& objMetaData);
+  int getActionList(const std::string& mediaId,
+                    std::vector<std::string>& objActionList);
   int getMediaSessionInfo(const std::string& mediaId,
                           mediaSession& objMediaSession);
   int getMediaPlayStatus(const std::string& mediaId,
@@ -55,17 +57,19 @@ public:
   int getMediaMuteStatus(const std::string& mediaId,
                          std::string& muteStatus);
   int getMediaPlayPosition(const std::string& mediaId,
-                         std::string& playPosition);
+                           std::string& playPosition);
   int setMediaMetaData(const std::string& mediaId,
                        const mediaMetaData& objMetaData);
   int setMediaCoverArt(const std::string& mediaId,
                        const std::vector<mediaCoverArt>& objCoverArt);
+  int setMediaAction(const std::string& mediaId,
+                     const std::vector<std::string>& mediaAction);
   int setMediaPlayStatus(const std::string& mediaId,
                          const std::string& playStatus);
   int setMediaMuteStatus(const std::string& mediaId,
                          const std::string& muteStatus);
   int setMediaPlayPosition(const std::string& mediaId,
-                         const std::string& playPosition);
+                           const std::string& playPosition);
   std::vector<std::string> getMediaSessionList(const std::string& appId);
   std::vector<std::string> getActiveMediaSessionList();
   std::string getCurrentActiveSession();

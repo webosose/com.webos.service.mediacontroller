@@ -35,6 +35,7 @@ std::string mediaMetaData[3];
 std::string AVNDeviceType = "AVN";
 std::string coverArtData;
 std::vector<std::string> source;
+std::string supportedActions;
 
 bool isAvn = false;
 LSHandle *gHandle = nullptr;
@@ -68,6 +69,24 @@ bool metaDataResponse(LSHandle* sh, LSMessage* reply, void* ctx) {
             source.push_back(coverArt[i]["src"].asString());
         }
       }
+    }
+    if(payload.hasKey("supportedActions"))
+    {
+      supportedActions.clear();
+      pbnjson::JValue sActions = payload["supportedActions"];
+      // Create a formatted string manually
+      std::string formattedActions = "SupportedActions : [\n";
+      for (size_t i = 0; i < sActions.arraySize(); ++i) {
+          formattedActions += "    \"" + sActions[i].asString() + "\"";
+          if (i < sActions.arraySize() - 1) {
+              formattedActions += ",";
+          }
+          formattedActions += "\n";
+      }
+      formattedActions += "]";
+
+      // Assign the formatted JSON string
+      supportedActions = formattedActions;
     }
   }
   return true;
@@ -174,6 +193,8 @@ void runMainMenuThread() {
           std::cout << "14. Hang Up" << std::endl;
           std::cout << "15. Get CoverArt Info" << std::endl;
           std::cout << "16. Get CoverArt Path" << std::endl;
+          std::cout << "17. Get Supported Actions" << std::endl;
+
           int userChoice = -1;
           std::cin >> userChoice;
           switch (userChoice) {
@@ -255,6 +276,11 @@ void runMainMenuThread() {
               std::string response = executeCommand(cmd.c_str());
 
               std::cout << "Response:\n" << response << std::endl;
+              break;
+            }
+            case 17:
+            {
+              std::cout << supportedActions << std::endl;
               break;
             }
             default:
