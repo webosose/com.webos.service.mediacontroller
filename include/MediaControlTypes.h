@@ -165,7 +165,7 @@ public:
                 const std::vector<coverArtSize> size) :
     src_(src),
     type_(type),
-    size_(size) {}
+    size_(std::move(size)) {}
 
   std::string getSource() const {return src_;}
   std::string getType() const {return type_;}
@@ -180,7 +180,7 @@ public:
       type_ = type;
   }
   void setSize(const std::vector<coverArtSize> size) {
-    size_ = size;
+    size_ = std::move(size);
   }
 };
 

@@ -1570,7 +1570,7 @@ bool MediaControlService::setMediaCoverArt(LSMessage& message) {
     PMLOG_INFO(CONST_MODULE_MCS, "%s Cover Art src : %s, type : %s", __FUNCTION__, coverArtSrc.c_str(), coverArtType.c_str());
 
     mediaCoverArt objCoverArt(coverArtSrc, coverArtType, std::move(sizes));
-    coverArtData.push_back(objCoverArt);
+    coverArtData.push_back(std::move(objCoverArt));
   }
 
   if(ptrMediaSessionMgr_)
