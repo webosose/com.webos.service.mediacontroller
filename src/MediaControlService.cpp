@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 LG Electronics, Inc.
+// Copyright (c) 2020-2025 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -1461,11 +1461,6 @@ bool MediaControlService::receiveMediaPlaybackInfo (LSMessage & message){
   }
   /*get mediaId from displayId*/
   std::string mediaId = ptrMediaSessionMgr_->getMediaIdFromDisplayId(displayId);
-  if (mediaId == "") {
-    errorCode = MCS_ERROR_INVALID_MEDIAID;
-    sendErrorResponse(errorCode, request);
-    return true;
-  }
 
   pbnjson::JValue responsePayload = pbnjson::Object();
   if(eventType == "playPosition" || eventType.empty()) {
@@ -1532,10 +1527,9 @@ bool MediaControlService::receiveMediaPlaybackInfo (LSMessage & message){
   mediaSession objMediaSession;
   errorCode = ptrMediaSessionMgr_->getMediaSessionInfo(mediaId, objMediaSession);
   if(errorCode != MCS_ERROR_NO_ERROR) {
-    PMLOG_ERROR(CONST_MODULE_MCS, "SessionInfo not found for mediaId : %s", mediaId.c_str());
-    sendErrorResponse(errorCode, request);
-    return true;
+    PMLOG_INFO(CONST_MODULE_MCS, "SessionInfo not found for mediaId : %s", mediaId.c_str());
   }
+
   responsePayload.put("mediaId", mediaId);
   responsePayload.put("appId", objMediaSession.getAppId());
 
